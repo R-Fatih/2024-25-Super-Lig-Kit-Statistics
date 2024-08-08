@@ -1,0 +1,33 @@
+﻿@using _2024_25_Süper_Lig_Kit.Dto.TeamDtos
+@using _2024_25_Süper_Lig_Kit.WebUI.Entities
+
+@{
+
+}
+
+
+@model CreateTeamDto
+
+@{
+    ViewData["Title"] = "Create Team";
+}
+
+<h2>Create Team</h2>
+
+<form method="post">
+    <div class="form-group">
+        <label asp-for="Name" class="control-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Logo" class="control-label"></label>
+        <input asp-for="Logo" class="form-control" />
+        <span asp-validation-for="Logo" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Create" class="btn btn-primary" />
+    </div>
+</form>
+
+

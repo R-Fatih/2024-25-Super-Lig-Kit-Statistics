@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "2024-25 Süper Lig Kit.WebApi", "2024-25 Süper Lig Kit.WebApi\2024-25 Süper Lig Kit.WebApi.csproj", "{7FAE1D26-6F5D-4D54-B5EA-6BE33EB3A9C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "2024-25 Süper Lig Kit.WebUI", "2024-25 Süper Lig Kit.WebUI\2024-25 Süper Lig Kit.WebUI.csproj", "{1E20F3B8-9803-448A-B5F9-1E0CF8F3112B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "2024-25 Süper Lig Kit.Dto", "2024-25 Süper Lig Kit.Dto\2024-25 Süper Lig Kit.Dto.csproj", "{BF2AA21C-694A-45BD-94B9-6D98C9246841}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7FAE1D26-6F5D-4D54-B5EA-6BE33EB3A9C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FAE1D26-6F5D-4D54-B5EA-6BE33EB3A9C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FAE1D26-6F5D-4D54-B5EA-6BE33EB3A9C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FAE1D26-6F5D-4D54-B5EA-6BE33EB3A9C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E20F3B8-9803-448A-B5F9-1E0CF8F3112B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E20F3B8-9803-448A-B5F9-1E0CF8F3112B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E20F3B8-9803-448A-B5F9-1E0CF8F3112B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E20F3B8-9803-448A-B5F9-1E0CF8F3112B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF2AA21C-694A-45BD-94B9-6D98C9246841}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF2AA21C-694A-45BD-94B9-6D98C9246841}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF2AA21C-694A-45BD-94B9-6D98C9246841}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF2AA21C-694A-45BD-94B9-6D98C9246841}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5405C764-158A-425F-9217-FDBD570D7C1B}
+	EndGlobalSection
+EndGlobal

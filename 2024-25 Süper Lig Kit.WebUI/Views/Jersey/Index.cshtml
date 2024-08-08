@@ -1,0 +1,41 @@
+﻿@using _2024_25_Süper_Lig_Kit.WebUI.Entities
+@model List<Jersey>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Body</th>
+            <th>Shorts</th>
+            <th>Socks</th>
+            <th>TeamId</th>
+            <th>IsKeeper</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td>@item.Body</td>
+                <td>@item.Shorts</td>
+                <td>@item.Socks</td>
+                <td>@item.TeamId</td>
+                <td>@item.IsKeeper</td>
+                <td>
+                    <a href="/Jersey/Images/@item.Id" class="btn btn-primary">Versiyonlar</a>
+
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

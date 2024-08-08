@@ -1,0 +1,6 @@
+@_2024_25_Süper_Lig_Kit.WebApi_HostAddress = http://localhost:5020
+
+GET {{_2024_25_Süper_Lig_Kit.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
