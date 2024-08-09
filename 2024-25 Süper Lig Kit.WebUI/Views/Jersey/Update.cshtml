@@ -1,0 +1,48 @@
+﻿
+@{
+
+}
+
+@model _2024_25_Süper_Lig_Kit.Dto.JerseyDtos.UpdateJerseyDto
+
+@{
+    ViewData["Title"] = "Create Jersey";
+}
+
+<h2>Create Jersey</h2>
+
+<form method="post">
+    <input type="hidden" asp-for=Id />
+    <input type="hidden" asp-for=TeamId />
+    <div class="form-group">
+        <label asp-for="Name" class="control-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Body" class="control-label"></label>
+        <input asp-for="Body" class="form-control" />
+        <span asp-validation-for="Body" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Shorts" class="control-label"></label>
+        <input asp-for="Shorts" class="form-control" />
+        <span asp-validation-for="Shorts" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Socks" class="control-label"></label>
+        <input asp-for="Socks" class="form-control" />
+        <span asp-validation-for="Socks" class="text-danger"></span>
+    </div>
+  
+
+    <div class="form-group">
+        <label asp-for="IsKeeper" class="control-label"></label>
+        <input asp-for="IsKeeper" class="form-control" />
+        <span asp-validation-for="IsKeeper" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <input type="submit" value="Create" class="btn btn-primary" />
+    </div>
+</form>

@@ -31,6 +31,8 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             }
             return Ok(Jersey);
         }
+
+
         [HttpPost]
         public IActionResult CreateJersey(CreateJerseyDto Jersey)
         {
@@ -48,13 +50,35 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             return Created("", Jersey);
         }
         [HttpPut]
-        public IActionResult UpdateJersey(Jersey Jersey)
+        public async Task<IActionResult> UpdateJersey(UpdateJerseyDto Jersey)
         {
-            _context.Jerseys.Update(Jersey);
+            var jersey = await _context.Jerseys.FindAsync(Jersey.Id);
+            
+            jersey.Name = Jersey.Name;
+            jersey.Body = Jersey.Body;
+            jersey.Shorts = Jersey.Shorts;
+            jersey.Socks = Jersey.Socks;
+            jersey.TeamId = Jersey.TeamId;
+            jersey.IsKeeper = Jersey.IsKeeper;
+            
+            _context.Jerseys.Update(jersey);
+            _context.SaveChanges();
+            return Ok();
+        }
+        [HttpDelete("{id}")]
+        public IActionResult DeleteJersey(int id)
+        {
+            var Jersey = _context.Jerseys.Find(id);
+            _context.Jerseys.Remove(Jersey);
             _context.SaveChanges();
             return NoContent();
         }
-      
-
+        [HttpGet("GetJerseysByTeam")]
+        public IActionResult GetJerseysByTeam(int teamId)
+        {
+            var Jerseys = _context.Jerseys.Where(x => x.TeamId == teamId&&x.IsKeeper==false).ToList();
+            return Ok(Jerseys);
+        }
+       
     }
 }

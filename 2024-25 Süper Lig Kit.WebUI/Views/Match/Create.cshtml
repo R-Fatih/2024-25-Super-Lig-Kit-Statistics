@@ -1,0 +1,157 @@
+﻿@using _2024_25_Süper_Lig_Kit.Dto.MatchDtos
+@model CreateMatchDto
+@{
+    ViewData["Title"] = "Index";
+}
+
+<style>
+    .image-dropdown {
+        display: flex;
+        align-items: center;
+    }
+
+        .image-dropdown img {
+            width: 150px;
+            height: 150px;
+            margin-right: 10px;
+        }
+</style>
+<form asp-action="Create" method="post">
+
+
+    <div class="form-group">
+        <label asp-for="HomeTeamId" class="control-label"></label>
+        <select asp-for="HomeTeamId" class="form-control" asp-items="ViewBag.Teams"></select>
+        <span asp-validation-for="HomeTeamId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="AwayTeamId" class="control-label"></label>
+        <select asp-for="AwayTeamId" class="form-control" asp-items="ViewBag.Teams"></select>
+        <span asp-validation-for="AwayTeamId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="HomeTeamJerseyImageGKId" class="control-label"></label>
+        <select asp-for="HomeTeamJerseyImageGKId" class="form-control" asp-items="ViewBag.HomeTeamJerseyGK"></select>
+        <span asp-validation-for="HomeTeamJerseyImageGKId" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="HomeTeamJerseyImageId" class="control-label"></label>
+        <select asp-for="HomeTeamJerseyImageId" class="form-control" asp-items="ViewBag.HomeTeamJerseyImageId"></select>
+        <span asp-validation-for="HomeTeamJerseyImageId" class="text-danger"></span>
+    </div>
+    <div id="homegkkits">
+      @*   <input type="radio" name="selectedImage" value="/kits/gs1.png">
+        <img style="width:50px;" src="/kits/gs1.png" alt="/kits/gs1.png"> *@
+    </div>
+    <div id="homekits">
+        @*   <input type="radio" name="selectedImage" value="/kits/gs1.png">
+        <img style="width:50px;" src="/kits/gs1.png" alt="/kits/gs1.png"> *@
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Create" class="btn btn-primary" />
+    </div>
+</form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#HomeTeamId').change(function () {
+            var homeTeamId = $(this).val();
+            console.log(homeTeamId);
+            if (homeTeamId) {
+                $.ajax({
+                    url: '@Url.Action("GetHomeTeamJerseyGK", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+                        var jerseySelect = $('#HomeTeamJerseyImageGKId');
+                        var jerseyDropdown = $('#homegkkits');
+                        jerseyDropdown.empty();
+                        $.each(data, function (index, jersey) {
+                            jerseySelect.append($('<option>', {
+                                value: jersey.id,
+                                text: jersey.name
+                            }));
+                            // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                            var imageUrl = jersey.jerseyImages.length > 0 ? jersey.jerseyImages[0].imgPath : '';
+       //                      for (var i = 0; i < jersey.jerseyImages.length; i++) {
+							// 	jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="selectedImage" value="' + jersey.jerseyImages[i].imgPath + '"><img src="' + jersey.jerseyImages[i].imgPath + '" alt="' + jersey.jerseyImages[i].imgPath + '"></div>'));
+							// }
+
+
+                        });
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+                $.ajax({
+                    url: '@Url.Action("GetHomeTeamJersey", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+                        var jerseySelect = $('#HomeTeamJerseyImageId');
+                        var jerseyDropdown = $('#homekits');
+                        jerseyDropdown.empty();
+                        $.each(data, function (index, jersey) {
+                            jerseySelect.append($('<option>', {
+                                value: jersey.id,
+                                text: jersey.name
+                            }));
+                            // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                            var imageUrl = jersey.jerseyImages.length > 0 ? jersey.jerseyImages[0].imgPath : '';
+                            //                      for (var i = 0; i < jersey.jerseyImages.length; i++) {
+                            // 	jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="selectedImage" value="' + jersey.jerseyImages[i].imgPath + '"><img src="' + jersey.jerseyImages[i].imgPath + '" alt="' + jersey.jerseyImages[i].imgPath + '"></div>'));
+                            // }
+
+
+                        });
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+            } else {
+                $('#HomeTeamJerseyImageId').empty();
+            }
+
+        });
+        $('#HomeTeamJerseyImageId').change(function () {
+            var homeTeamId = $(this).val();
+            console.log(homeTeamId);
+            if (homeTeamId) {
+                $.ajax({
+                    url: '@Url.Action("GetHomeKitJerseyById", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+
+                        var jerseyDropdown = $('#homekits');
+                        jerseyDropdown.empty();
+                        console.log(data);
+                            
+                        var jersey = data;
+                            // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                            var imageUrl = jersey.length > 0 ? jersey[0].imgPath : 'yok';
+                            console.log(imageUrl);
+                            for (var i = 0; i < jersey.length; i++) {
+                            jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="selectedImage" value="' + jersey[i].jerseyImageId + '"><img src="' + jersey[i].imgPath + '" alt="' + jersey[i].imgPath + '"></div>'));
+                            }
+
+                            console.log('kitcount');
+                            console.log(jersey.length);
+                        
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+            } else {
+                $('#HomeTeamJerseyImageGKId').empty();
+            }
+        });
+    });
+</script>

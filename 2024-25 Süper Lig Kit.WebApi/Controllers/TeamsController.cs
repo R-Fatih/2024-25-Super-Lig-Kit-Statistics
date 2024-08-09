@@ -1,8 +1,11 @@
-﻿using _2024_25_Süper_Lig_Kit.Dto.TeamDtos;
+﻿using _2024_25_Süper_Lig_Kit.Dto.JerseyDtos;
+using _2024_25_Süper_Lig_Kit.Dto.JerseyImageDtos;
+using _2024_25_Süper_Lig_Kit.Dto.TeamDtos;
 using _2024_25_Süper_Lig_Kit.WebApi.Context;
 using _2024_25_Süper_Lig_Kit.WebApi.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
 {
@@ -53,7 +56,22 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
         [HttpGet("GetKitsByTeam")]
         public IActionResult GetKitsByTeam(int teamId)
         {
-            var kits = _context.Jerseys.Where(x => x.TeamId == teamId).ToList();
+            var kits = _context.Jerseys.Include(x=>x.JerseyImages).Where(x => x.TeamId == teamId && x.IsKeeper == false).Select(x=>new ResultJerseyDto
+            {
+
+                Body = x.Body,
+                Id = x.Id,
+                Name = x.Name,
+                Shorts = x.Shorts,
+                Socks = x.Socks,
+                TeamId = x.TeamId,
+                JerseyImages = x.JerseyImages.Select(x => new ResultJerseyImageDto
+                {
+                    JerseyImageId = x.JerseyImageId,
+                    JerseyId = x.JerseyId,
+                    ImgPath = x.ImgPath
+                }).ToList()
+            }).ToList();
             return Ok(kits);
         }
         [HttpGet("GetKitImagesByKit")]
@@ -61,6 +79,12 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
         {
             var kits = _context.JerseyImages.Where(x => x.JerseyId == kitid).ToList();
             return Ok(kits);
+        }
+        [HttpGet("GetKeeperJerseysByTeam")]
+        public IActionResult GetKeeperJerseysByTeam(int teamId)
+        {
+            var Jerseys = _context.Jerseys.Where(x => x.TeamId == teamId && x.IsKeeper == true).ToList();
+            return Ok(Jerseys);
         }
     }
 }

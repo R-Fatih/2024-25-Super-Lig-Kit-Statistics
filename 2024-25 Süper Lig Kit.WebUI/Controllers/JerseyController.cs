@@ -73,21 +73,25 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         }
 
         // Update action
-        public IActionResult Update(int id)
+        [HttpGet]
+        public async Task<IActionResult> Update(int id)
         {
-            // Güncellenecek takımı bul
-            var Jersey = new Jersey(); // Bu örnekte boş bir takım nesnesi kullanıyoruz
-            return View(Jersey);
+            var client = _client.CreateClient();
+            var response = await client.GetFromJsonAsync<UpdateJerseyDto>($"https://localhost:7245/api/Jerseys/{id}");
+
+
+            return View(response);
         }
 
         [HttpPost]
-        public IActionResult Update(Jersey Jersey)
+        public async Task<IActionResult> Update(UpdateJerseyDto Jersey)
         {
-            if (ModelState.IsValid)
-            {
+            
+            var client = _client.CreateClient();
+            var response =await client.PutAsJsonAsync("https://localhost:7245/api/Jerseys", Jersey);
                 // Takım güncelleme işlemi
                 return RedirectToAction("Index");
-            }
+            
             return View(Jersey);
         }
     
