@@ -40,7 +40,7 @@
     </tbody>
 </table>
 <button onclick="abc()">btn</button>
-<canvas width="8153" height="4000" id="myCanvas"></canvas>
+<canvas width="8000" height="12000" id="myCanvas"></canvas>
 
 
 <script type="text/javascript">
@@ -52,14 +52,77 @@
             data: { },
             success: function (data) {
 
-
+                var canvas = document.getElementById('myCanvas');
+                var ctx = canvas.getContext('2d');
+                var x = 0;
+                var y = 0;
+                var maxHeight = 0;
 
                 console.log(data);
 
-                var jersey = data;
+                var jerseys = data;
                 // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
-            
+                x = 350;
+                for (var i = 0; i < jerseys.length; i++) {
+                    
+                    var team = jerseys[i];
+                    var teamLogo = team.homeTeamLogo;
+                    var teamLogosrc = new Image();
+                    teamLogosrc.src = teamLogo;
+                    ctx.drawImage(teamLogosrc, x, y);
+                    
+                    x += 400;
 
+                }
+                y += 300;
+                x = 0;
+                for (var i = 0; i < jerseys.length; i++) {
+					var team = jerseys[i];
+                    var kits = team.kits;
+                    var teamLogo = team.homeTeamLogo;
+                    var teamLogosrc = new Image();
+                    teamLogosrc.src = teamLogo;
+                    ctx.drawImage(teamLogosrc, x, y);
+
+                    for (var j = 0; j < kits.length; j++) {
+						var kit = kits[j];
+						var homeKit = kit.homeKit;
+						var awayKit = kit.awayKit;
+						console.log(homeKit);
+						console.log(awayKit);
+
+                        var homeKitImg = new Image();
+                        var awayKitImg = new Image();
+                      
+                        if (homeKit != null) {
+
+
+                            homeKitImg.src = homeKit.imgPath;
+                        } else {
+                            homeKitImg.src = '/kits/blank.png';
+
+                        }
+                        if (awayKit != null) {
+                            awayKitImg.src = awayKit.imgPath;
+
+                        } else {
+                            awayKitImg.src = '/kits/blank.png';
+
+                        }
+
+                         x += 50;
+
+                        ctx.drawImage(homeKitImg, x, y, 500, 500);
+							x += 200;
+                        ctx.drawImage(awayKitImg, x, y, 500, 500);
+                        x += 150;
+
+						
+					}
+                    x = 0;
+                    y += 550;
+
+				}
                
 
 
