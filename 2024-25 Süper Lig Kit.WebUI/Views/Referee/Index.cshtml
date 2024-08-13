@@ -1,0 +1,39 @@
+﻿@using _2024_25_Süper_Lig_Kit.Dto.RefereeDtos
+@using _2024_25_Süper_Lig_Kit.WebUI.Entities
+@model List<ResultRefereeDto>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>img</th>
+            <th>IsFıfa</th>
+            <th>Act</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.RefereeId</td>
+                <td>@item.RefereeName</td>
+                <td><img width="100px" src="@item.ImgUrl"/></td>
+                <td>@item.IsFifa</td>
+                <td>
+                <a href="/Referee/Update/@item.RefereeId" class="btn btn-primary">Güncelle</a>
+                    <a href="/Match/Referee/@item.RefereeId" class="btn btn-primary">Maçlar</a>
+
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<a href="/Referee/Create" class="btn btn-success">Create New Referee</a>

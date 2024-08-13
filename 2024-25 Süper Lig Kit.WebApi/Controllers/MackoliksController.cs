@@ -1,4 +1,5 @@
-﻿using _2024_25_Süper_Lig_Kit.WebApi.Entities;
+﻿using _2024_25_Süper_Lig_Kit.Dto.MatchDtos;
+using _2024_25_Süper_Lig_Kit.WebApi.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,7 +23,7 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             return new string[] { "value1", "value2" };
         }
         [HttpGet("get")]
-        public async Task<ActionResult<Match>> scrape(string adres)
+        public async Task<ActionResult<ResultMatchDto>> scrape(string adres)
         {
             List<string> list = new List<string>
             {
@@ -32,7 +33,7 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
                     "//*[@id=\"match-details\"]/div/div[1]/div/div[2]/div[3]/div[1]/a"
             };
 
-            Match match = new Match();
+            ResultMatchDto match = new ResultMatchDto();
             HtmlAgilityPack.HtmlWeb web = new HtmlAgilityPack.HtmlWeb();
             HtmlAgilityPack.HtmlDocument document = web.Load($"https://arsiv.mackolik.com/Mac/{adres}/");
             var date = document.DocumentNode.SelectNodes(list[0]);

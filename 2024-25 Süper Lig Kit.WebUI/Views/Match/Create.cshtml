@@ -16,7 +16,7 @@
             margin-right: 10px;
         }
 </style>
-<form asp-action="Create" method="post">
+<form asp-action="Create" enctype="multipart/form-data" asp-controller="Match" method="post">
 
 
     <div class="form-group">
@@ -41,18 +41,70 @@
         <select asp-for="HomeTeamJerseyImageId" class="form-control" asp-items="ViewBag.HomeTeamJerseyImageId"></select>
         <span asp-validation-for="HomeTeamJerseyImageId" class="text-danger"></span>
     </div>
-    <div id="homegkkits">
-      @*   <input type="radio" name="selectedImage" value="/kits/gs1.png">
-        <img style="width:50px;" src="/kits/gs1.png" alt="/kits/gs1.png"> *@
+    <div class="form-group">
+        <label asp-for="RefereeJerseyImageId" class="control-label"></label>
+        <select asp-for="RefereeJerseyImageId" class="form-control" asp-items="ViewBag.RefereeJerseyImageId"></select>
+        <span asp-validation-for="RefereeJerseyImageId" class="text-danger"></span>
     </div>
-    <div id="homekits">
-        @*   <input type="radio" name="selectedImage" value="/kits/gs1.png">
-        <img style="width:50px;" src="/kits/gs1.png" alt="/kits/gs1.png"> *@
+    <div class="form-group">
+        <label asp-for="AwayTeamJerseyImageId" class="control-label"></label>
+        <select asp-for="AwayTeamJerseyImageId" class="form-control" asp-items="ViewBag.AwayTeamJerseyImageId"></select>
+        <span asp-validation-for="AwayTeamJerseyImageId" class="text-danger"></span>
+    </div>  
+    <div class="form-group">
+        <label asp-for="AwayTeamJerseyImageGKId" class="control-label"></label>
+        <select asp-for="AwayTeamJerseyImageGKId" class="form-control" asp-items="ViewBag.AwayTeamJerseyImageGKId"></select>
+        <span asp-validation-for="AwayTeamJerseyImageGKId" class="text-danger"></span>
     </div>
+    <div class="form-group">
+        <label asp-for="RefereeId" class="control-label"></label>
+        <select asp-for="RefereeId" class="form-control" asp-items="ViewBag.Referees"></select>
+        <span asp-validation-for="RefereeId" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Maçkolik" class="control-label"></label>
+        <input asp-for="Maçkolik" class="form-control"/>
+        <span asp-validation-for="Maçkolik" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="MainId" class="control-label"></label>
+        <input asp-for="MainId" class="form-control" />
+        <span asp-validation-for="MainId" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Week" class="control-label"></label>
+        <input asp-for="Week" class="form-control" />
+        <span asp-validation-for="Week" class="text-danger"></span>
+    </div>
+    <div style="display:flex;" id="homegkkits">
+
+
+    </div>
+    <div style="display:flex;" id="homekits">
+
+
+    </div>
+    <div style="display:flex;" id="refkits">
+    </div>
+    <div style="display:flex;" id="awaykits">
+    </div>
+    <div style="display:flex;" id="awaygkkits">
+    </div>
+    <input type="hidden" id="canvasData" asp-for="canvasData" />
+    <input type="hidden" id="hg" asp-for="hg" />
+    <input type="hidden" id="hp" asp-for="hp" />
+    <input type="hidden" id="rf" asp-for="rf" />
+    <input type="hidden" id="ap" asp-for="ap" />
+    <input type="hidden" id="ag" asp-for="ag" />
+
     <div class="form-group">
         <input type="submit" value="Create" class="btn btn-primary" />
     </div>
 </form>
+<canvas style="width:300px;" id="myCanvas" width="8153" height="4000">your canvas loads here</canvas>
+
+<button onclick="createimage()">create image</button>
+<button onclick="createimage2()">create canvas</button>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
@@ -70,13 +122,16 @@
                         var jerseySelect = $('#HomeTeamJerseyImageGKId');
                         var jerseyDropdown = $('#homegkkits');
                         jerseyDropdown.empty();
+                        $('#HomeTeamJerseyImageGKId').empty();
+                        $('#HomeTeamJerseyImageId').empty();
+
                         $.each(data, function (index, jersey) {
                             jerseySelect.append($('<option>', {
                                 value: jersey.id,
                                 text: jersey.name
                             }));
                             // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
-                            var imageUrl = jersey.jerseyImages.length > 0 ? jersey.jerseyImages[0].imgPath : '';
+                           // var imageUrl = jersey.jerseyImages.length > 0 ? jersey.jerseyImages[0].imgPath : '';
        //                      for (var i = 0; i < jersey.jerseyImages.length; i++) {
 							// 	jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="selectedImage" value="' + jersey.jerseyImages[i].imgPath + '"><img src="' + jersey.jerseyImages[i].imgPath + '" alt="' + jersey.jerseyImages[i].imgPath + '"></div>'));
 							// }
@@ -119,6 +174,71 @@
             }
 
         });
+        $('#AwayTeamId').change(function () {
+            var homeTeamId = $(this).val();
+            console.log(homeTeamId);
+            if (homeTeamId) {
+                $.ajax({
+                    url: '@Url.Action("GetHomeTeamJerseyGK", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+                        var jerseySelect = $('#AwayTeamJerseyImageGKId');
+                        var jerseyDropdown = $('#awaygkkits');
+                        jerseyDropdown.empty();
+                        $('#AwayTeamJerseyImageGKId').empty();
+                        $('#AwayTeamJerseyImageId').empty();
+
+                        $.each(data, function (index, jersey) {
+                            jerseySelect.append($('<option>', {
+                                value: jersey.id,
+                                text: jersey.name
+                            }));
+                            // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                            // var imageUrl = jersey.jerseyImages.length > 0 ? jersey.jerseyImages[0].imgPath : '';
+                            //                      for (var i = 0; i < jersey.jerseyImages.length; i++) {
+                            // 	jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="selectedImage" value="' + jersey.jerseyImages[i].imgPath + '"><img src="' + jersey.jerseyImages[i].imgPath + '" alt="' + jersey.jerseyImages[i].imgPath + '"></div>'));
+                            // }
+
+
+                        });
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+                $.ajax({
+                    url: '@Url.Action("GetHomeTeamJersey", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+                        var jerseySelect = $('#AwayTeamJerseyImageId');
+                        var jerseyDropdown = $('#awaykits');
+                        jerseyDropdown.empty();
+                        $.each(data, function (index, jersey) {
+                            jerseySelect.append($('<option>', {
+                                value: jersey.id,
+                                text: jersey.name
+                            }));
+                            // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                            var imageUrl = jersey.jerseyImages.length > 0 ? jersey.jerseyImages[0].imgPath : '';
+                            //                      for (var i = 0; i < jersey.jerseyImages.length; i++) {
+                            // 	jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="selectedImage" value="' + jersey.jerseyImages[i].imgPath + '"><img src="' + jersey.jerseyImages[i].imgPath + '" alt="' + jersey.jerseyImages[i].imgPath + '"></div>'));
+                            // }
+
+
+                        });
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+            } else {
+                $('#AwayTeamJerseyImageId').empty();
+            }
+
+        });
+
         $('#HomeTeamJerseyImageId').change(function () {
             var homeTeamId = $(this).val();
             console.log(homeTeamId);
@@ -138,7 +258,7 @@
                             var imageUrl = jersey.length > 0 ? jersey[0].imgPath : 'yok';
                             console.log(imageUrl);
                             for (var i = 0; i < jersey.length; i++) {
-                            jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="selectedImage" value="' + jersey[i].jerseyImageId + '"><img src="' + jersey[i].imgPath + '" alt="' + jersey[i].imgPath + '"></div>'));
+                            jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="homekit" value="' + jersey[i].imgPath + "," + jersey[i].jerseyImageId + '"><img src="' + jersey[i].imgPath + '" alt="' + jersey[i].imgPath + '"></div>'));
                             }
 
                             console.log('kitcount');
@@ -153,5 +273,205 @@
                 $('#HomeTeamJerseyImageGKId').empty();
             }
         });
+        $('#HomeTeamJerseyImageGKId').change(function () {
+            var homeTeamId = $(this).val();
+            console.log(homeTeamId);
+            if (homeTeamId) {
+                $.ajax({
+                    url: '@Url.Action("GetHomeKitJerseyById", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+
+                        var jerseyDropdown = $('#homegkkits');
+                        jerseyDropdown.empty();
+                        console.log(data);
+
+                        var jersey = data;
+                        // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                        var imageUrl = jersey.length > 0 ? jersey[0].imgPath : 'yok';
+                        console.log(imageUrl);
+                        for (var i = 0; i < jersey.length; i++) {
+                            jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="homegkkit" value="' + jersey[i].imgPath + "," + jersey[i].jerseyImageId + '"><img src="' + jersey[i].imgPath + '" alt="' + jersey[i].imgPath + '"></div>'));
+                        }
+
+                        console.log('kitcount');
+                        console.log(jersey.length);
+
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+            } else {
+                $('#HomeTeamJerseyImageGKId').empty();
+            }
+        });
+        $('#RefereeJerseyImageId').change(function () {
+            var homeTeamId = $(this).val();
+            console.log(homeTeamId);
+            if (homeTeamId) {
+                $.ajax({
+                    url: '@Url.Action("GetHomeKitJerseyById", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+
+                        var jerseyDropdown = $('#refkits');
+                        jerseyDropdown.empty();
+                        console.log(data);
+
+                        var jersey = data;
+                        // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                        var imageUrl = jersey.length > 0 ? jersey[0].imgPath : 'yok';
+                        console.log(imageUrl);
+                        for (var i = 0; i < jersey.length; i++) {
+                            jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="refereekit" value="' + jersey[i].imgPath + "," + jersey[i].jerseyImageId + '"><img src="' + jersey[i].imgPath + '" alt="' + jersey[i].imgPath + '"></div>'));
+                        }
+
+                        console.log('kitcount');
+                        console.log(jersey.length);
+
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+            } else {
+                $('#RefereeJerseyImageId').empty();
+            }
+        });
+        $('#AwayTeamJerseyImageId').change(function () {
+            var homeTeamId = $(this).val();
+            console.log(homeTeamId);
+            if (homeTeamId) {
+                $.ajax({
+                    url: '@Url.Action("GetHomeKitJerseyById", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+
+                        var jerseyDropdown = $('#awaykits');
+                        jerseyDropdown.empty();
+                        console.log(data);
+
+                        var jersey = data;
+                        // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                        var imageUrl = jersey.length > 0 ? jersey[0].imgPath : 'yok';
+                        console.log(imageUrl);
+                        for (var i = 0; i < jersey.length; i++) {
+                            jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="awaykit" value="' + jersey[i].imgPath + "," + jersey[i].jerseyImageId + '"><img src="' + jersey[i].imgPath + '" alt="' + jersey[i].imgPath + '"></div>'));
+                        }
+
+                        console.log('kitcount');
+                        console.log(jersey.length);
+
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+            } else {
+                $('#AwayTeamJerseyImageId').empty();
+            }
+        });
+        $('#AwayTeamJerseyImageGKId').change(function () {
+            var homeTeamId = $(this).val();
+            console.log(homeTeamId);
+            if (homeTeamId) {
+                $.ajax({
+                    url: '@Url.Action("GetHomeKitJerseyById", "Match")',
+                    type: "GET",
+                    data: { homeTeamId: homeTeamId },
+                    success: function (data) {
+
+                        var jerseyDropdown = $('#awaygkkits');
+                        jerseyDropdown.empty();
+                        console.log(data);
+
+                        var jersey = data;
+                        // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                        var imageUrl = jersey.length > 0 ? jersey[0].imgPath : 'yok';
+                        console.log(imageUrl);
+                        for (var i = 0; i < jersey.length; i++) {
+                            jerseyDropdown.append($('<div class="image-dropdown"><input type="radio" name="awaygkkit" value="' + jersey[i].imgPath + "," + jersey[i].jerseyImageId + '"><img src="' + jersey[i].imgPath + '" alt="' + jersey[i].imgPath + '"></div>'));
+                        }
+
+                        console.log('kitcount');
+                        console.log(jersey.length);
+
+
+                        // Option'lara resimleri arka plan olarak ekliyoruz
+
+                    }
+                });
+            } else {
+                $('#AwayTeamJerseyImageGKId').empty();
+            }
+        });
     });
 </script>
+
+                            <script>
+                                function createimage() {
+   
+
+        var homekit = document.querySelector('input[name="homekit"]:checked').value.split(',')[0];
+        var homegkkit = document.querySelector('input[name="homegkkit"]:checked').value.split(',')[0];
+        var refereekit = document.querySelector('input[name="refereekit"]:checked').value.split(',')[0];
+        var awaykit = document.querySelector('input[name="awaykit"]:checked').value.split(',')[0];
+        var awaygkkit = document.querySelector('input[name="awaygkkit"]:checked').value.split(',')[0];
+        var myCanvas = document.getElementById("myCanvas");
+        var myContext = myCanvas.getContext("2d");
+
+        var img1 = loadImage(homegkkit, main);
+        var img2 = loadImage(homekit, main);
+        var img3 = loadImage(refereekit, main);
+        var img4 = loadImage(awaykit, main);
+        var img5 = loadImage(awaygkkit, main);
+
+
+        var imagesLoaded = 0;
+     //   var canvasData = myCanvas.toDataURL("image/png");
+
+        document.getElementById("hg").value=(document.querySelector('input[name="homegkkit"]:checked').value.split(',')[1]);
+        document.getElementById("hp").value=(document.querySelector('input[name="homekit"]:checked').value.split(',')[1]);
+        document.getElementById("ap").value=(document.querySelector('input[name="awaykit"]:checked').value.split(',')[1]);
+        document.getElementById("ag").value=(document.querySelector('input[name="awaygkkit"]:checked').value.split(',')[1]);
+        document.getElementById("rf").value=(document.querySelector('input[name="refereekit"]:checked').value.split(',')[1]);
+
+
+        //main();
+        function main() {
+            imagesLoaded += 1;
+            console.log(imagesLoaded);
+            if (imagesLoaded == 5) {
+                // composite now
+                myContext.drawImage(img5, 4600, 0);
+                myContext.drawImage(img4, 3150, 0);
+                myContext.drawImage(img3, 1700, 0);
+
+                myContext.drawImage(img2, 250, 0);
+
+
+                myContext.drawImage(img1, -1200, 0);
+            }
+        }
+        function loadImage(src, onload) {
+            var img = new Image();
+            img.onload = onload;
+            img.src = src;
+            return img;
+        }
+                                }
+                            </script>
+                            <script>
+                                function createimage2() {
+        var myCanvas = document.getElementById("myCanvas");
+
+        var canvasData = myCanvas.toDataURL("image/png");
+                                    console.log(canvasData);
+        document.getElementById("canvasData").value = canvasData;
+
+                                }
+                            </script>

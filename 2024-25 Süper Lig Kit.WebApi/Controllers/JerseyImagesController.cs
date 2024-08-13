@@ -4,6 +4,7 @@ using _2024_25_Süper_Lig_Kit.WebApi.Context;
 using _2024_25_Süper_Lig_Kit.WebApi.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
 {
@@ -20,7 +21,78 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
         [HttpGet]
         public IActionResult GetJerseyImages()
         {
-            var Jerseys = _context.JerseyImages.ToList();
+            var Jerseys = _context.JerseyImages.Include(x=>x.HomeTeamJerseyImageGKMatches).Include(y=>y.HomeTeamJerseyImageMatches).Include(z=>z.RefereeJerseyImageMatches).Include(w=>w.AwayTeamJerseyImageGKMatches).Include(u=>u.AwayTeamJerseyImageMatches).Select(t=>new JerseyImage
+            {
+                JerseyId = t.JerseyId,
+                ImgPath = t.ImgPath,
+                JerseyImageId = t.JerseyImageId,
+                AwayTeamJerseyImageGKMatches = t.AwayTeamJerseyImageGKMatches.Select(x => new Match
+                {
+                    AwayMS = x.AwayMS,
+                    HomeMS = x.HomeMS,
+                    Date = x.Date,
+                    MatchId = x.MatchId,
+                    HomeTeamId = x.HomeTeamId,
+                    AwayTeamId = x.AwayTeamId,
+                    RefereeId = x.RefereeId,
+                    Week = x.Week,
+                    MainId = x.MainId,
+                    Maçkolik = x.Maçkolik,
+                }).ToList(),
+                AwayTeamJerseyImageMatches = t.AwayTeamJerseyImageMatches.Select(x => new Match
+                {
+                    AwayMS = x.AwayMS,
+                    HomeMS = x.HomeMS,
+                    Date = x.Date,
+                    MatchId = x.MatchId,
+                    HomeTeamId = x.HomeTeamId,
+                    AwayTeamId = x.AwayTeamId,
+                    RefereeId = x.RefereeId,
+                    Week = x.Week,
+                    MainId = x.MainId,
+                    Maçkolik = x.Maçkolik,
+                }).ToList(),
+                HomeTeamJerseyImageGKMatches = t.HomeTeamJerseyImageGKMatches.Select(x => new Match
+                {
+                    AwayMS = x.AwayMS,
+                    HomeMS = x.HomeMS,
+                    Date = x.Date,
+                    MatchId = x.MatchId,
+                    HomeTeamId = x.HomeTeamId,
+                    AwayTeamId = x.AwayTeamId,
+                    RefereeId = x.RefereeId,
+                    Week = x.Week,
+                    MainId = x.MainId,
+                    Maçkolik = x.Maçkolik,
+                }).ToList(),
+                HomeTeamJerseyImageMatches = t.HomeTeamJerseyImageMatches.Select(x => new Match
+                {
+                    AwayMS = x.AwayMS,
+                    HomeMS = x.HomeMS,
+                    Date = x.Date,
+                    MatchId = x.MatchId,
+                    HomeTeamId = x.HomeTeamId,
+                    AwayTeamId = x.AwayTeamId,
+                    RefereeId = x.RefereeId,
+                    Week = x.Week,
+                    MainId = x.MainId,
+                    Maçkolik = x.Maçkolik,
+                }).ToList(),
+                RefereeJerseyImageMatches = t.RefereeJerseyImageMatches.Select(x => new Match
+                {
+                    AwayMS = x.AwayMS,
+                    HomeMS = x.HomeMS,
+                    Date = x.Date,
+                    MatchId = x.MatchId,
+                    HomeTeamId = x.HomeTeamId,
+                    AwayTeamId = x.AwayTeamId,
+                    RefereeId = x.RefereeId,
+                    Week = x.Week,
+                    MainId = x.MainId,
+                    Maçkolik = x.Maçkolik,
+
+                }).ToList()
+            });
             return Ok(Jerseys);
         }
         [HttpPost]

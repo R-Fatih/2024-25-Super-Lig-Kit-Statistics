@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace _2024_25_Süper_Lig_Kit.Dto.MatchDtos
 {
-    public class CreateMatchDto
+    public class CreateMatchDtoForPost
     {
         public int HomeTeamId { get; set; }
         public int AwayTeamId { get; set; }
@@ -24,12 +24,7 @@ namespace _2024_25_Süper_Lig_Kit.Dto.MatchDtos
         public int MainId { get; set; }
         public int Week { get; set; }
         public int RefereeId { get; set; }
-        public string canvasData { get; set; }
-        public string hg { get; set; }
-        public string hp { get; set; }
-        public string rf { get; set; }
-        public string ag { get; set; }
-        public string ap { get; set; }
+
 
       
     }

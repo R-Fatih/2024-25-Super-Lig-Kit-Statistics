@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 {
+    
+
     public class JerseyController : Controller
     {
         private readonly IHttpClientFactory _client;
@@ -22,6 +24,17 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
             return View(response);
         }
+        [Route("Jersey/Index/{id}")]
+        public async Task<IActionResult> Index(int id)
+        {
+            var client = _client.CreateClient();
+            var response = await client.GetFromJsonAsync<List<Jersey>>($"https://localhost:7245/api/Jerseys/GetAllJerseysByTeam?teamId={id}");
+
+            return View(response);
+        }
+
+
+
         public async Task<IActionResult> Images(int id)
         {
             var client = _client.CreateClient();

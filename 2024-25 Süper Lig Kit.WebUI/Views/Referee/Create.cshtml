@@ -1,0 +1,34 @@
+﻿
+@{
+
+}
+
+@model _2024_25_Süper_Lig_Kit.Dto.RefereeDtos.CreateRefereeDto
+
+@{
+    ViewData["Title"] = "Create Jersey";
+}
+
+<h2>Create Jersey</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label asp-for="RefereeName" class="control-label"></label>
+        <input asp-for="RefereeName" class="form-control" />
+        <span asp-validation-for="RefereeName" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="IsFifa" class="control-label"></label>
+        <input type="checkbox" asp-for="IsFifa" class="form-control" />
+        <span asp-validation-for="IsFifa" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="ImgUrl" class="control-label"></label>
+        <input asp-for="ImgUrl" class="form-control" />
+        <span asp-validation-for="ImgUrl" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <input type="submit" value="Create" class="btn btn-primary" />
+    </div>
+</form>

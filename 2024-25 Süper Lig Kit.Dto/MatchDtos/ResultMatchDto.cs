@@ -1,4 +1,7 @@
-﻿using System;
+﻿using _2024_25_Süper_Lig_Kit.Dto.JerseyImageDtos;
+using _2024_25_Süper_Lig_Kit.Dto.RefereeDtos;
+using _2024_25_Süper_Lig_Kit.Dto.TeamDtos;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,5 +28,13 @@ namespace _2024_25_Süper_Lig_Kit.Dto.MatchDtos
         public int MainId { get; set; }
         public int Week { get; set; }
         public int RefereeId { get; set; }
+        public ResultTeamDto HomeTeam { get; set; }
+        public ResultTeamDto AwayTeam { get; set; }
+        public ResultRefereeDto Referee { get; set; }
+        public ResultJerseyImageDto HomeTeamJerseyImage { get; set; }
+        public ResultJerseyImageDto HomeTeamJerseyImageGK { get; set; }
+        public ResultJerseyImageDto RefereeJerseyImage { get; set; }
+        public ResultJerseyImageDto AwayTeamJerseyImage { get; set; }
+        public ResultJerseyImageDto AwayTeamJerseyImageGK { get; set; } 
     }
 }

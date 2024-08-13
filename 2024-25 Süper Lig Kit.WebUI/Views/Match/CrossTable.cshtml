@@ -1,0 +1,114 @@
+﻿@using _2024_25_Süper_Lig_Kit.Dto.MatchDtos
+@using _2024_25_Süper_Lig_Kit.Dto.TeamDtos
+@model List<Class1>
+@{
+    ViewData["Title"] = "CrossTable";
+}
+
+
+<table class="table table-striped table-wrap">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Teams</th>
+            <th>Hakem</th>
+            <th>Skor</th>
+            <th>Formalar</th>
+            <th>Hafta</th>
+            <th>Tarih</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+
+
+                <td> <img class="team-logo" width="50" height="50" src="@item.homeTeamLogo" /></td>
+                @foreach (var item2 in item.kits)
+                {
+                    <td>
+                        <img class="kit-image" width="50" height="50" src="@(item2.homeKit!=null? item2.homeKit?.imgPath:"/kits/blank.png")" />
+                        <img class="kit-image" width="50" height="50" src="@(item2.awayKit!=null? item2.awayKit?.imgPath:"/kits/blank.png")" />
+                    </td>
+                }
+                
+
+            </tr>
+        }
+    </tbody>
+</table>
+<button onclick="abc()">btn</button>
+<canvas width="8153" height="4000" id="myCanvas"></canvas>
+
+
+<script type="text/javascript">
+  
+    function abc() {
+        $.ajax({
+            url: '@Url.Action("CrossTable2", "Match")',
+            type: "GET",
+            data: { },
+            success: function (data) {
+
+
+
+                console.log(data);
+
+                var jersey = data;
+                // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+            
+
+               
+
+
+                console.log('kitcount');
+                //console.log(jersey.length);
+
+
+                // Option'lara resimleri arka plan olarak ekliyoruz
+
+            }
+        });
+    }
+</script>
+<script>
+    function we() {
+        // Get the canvas element and its context
+        var canvas = document.getElementById('myCanvas');
+        var ctx = canvas.getContext('2d');
+
+        // Get all images from the table
+        var images = document.querySelectorAll('.team-logo, .kit-image');
+
+        // Position variables for where to draw on the canvas
+        var x = 0;
+        var y = 0;
+        var maxHeight = 0;
+
+        // Load and draw each image
+        images.forEach(function (img) {
+            var image = new Image();
+            image.src = img.src;
+
+            image.onload = function () {
+                // Draw the image on the canvas
+                ctx.drawImage(image, x, y);
+
+                // Update the x position for the next image
+                x += 50;
+                if (image.height > maxHeight) {
+                    maxHeight = image.height;
+                }
+
+                // Move to the next row if needed
+                if (x + 50 > canvas.width) {
+                    x = 0;
+                    y += maxHeight;
+                    maxHeight = 0;
+                }
+            }
+        });
+    }
+</script>

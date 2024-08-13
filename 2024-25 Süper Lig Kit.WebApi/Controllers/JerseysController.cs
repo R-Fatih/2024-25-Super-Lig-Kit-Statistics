@@ -79,6 +79,11 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             var Jerseys = _context.Jerseys.Where(x => x.TeamId == teamId&&x.IsKeeper==false).ToList();
             return Ok(Jerseys);
         }
-       
+        [HttpGet("GetAllJerseysByTeam")]
+        public IActionResult GetAllJerseysByTeam(int teamId)
+        {
+            var Jerseys = _context.Jerseys.Where(x => x.TeamId == teamId ).ToList();
+            return Ok(Jerseys);
+        }
     }
 }
