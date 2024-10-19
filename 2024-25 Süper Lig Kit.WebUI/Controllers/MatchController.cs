@@ -24,10 +24,10 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string week)
         {
             var client = _client.CreateClient();
-            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>("https://localhost:7245/api/Matches");
+            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches?week={week}");
             return View(matches);
         }
         [Route("Match/Index/{id}")]

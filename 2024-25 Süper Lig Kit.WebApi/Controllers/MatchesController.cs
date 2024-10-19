@@ -20,7 +20,7 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetMatches()
+        public async Task<IActionResult> GetMatches(int week)
         {
             var matches =await _context.Matches.Include(x=>x.HomeTeam).Include(y=>y.AwayTeam ).Include(z=>z.Referee)
                 .Include(w=>w.HomeTeamJerseyImageGK)
@@ -28,6 +28,7 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
                 .Include(w=>w.RefereeJerseyImage)
                 .Include(w=>w.AwayTeamJerseyImageGK)
                 .Include(w=>w.AwayTeamJerseyImage)
+                .Where(x=>x.Week==week)
                 .ToListAsync();
             return Ok(matches);
         }
