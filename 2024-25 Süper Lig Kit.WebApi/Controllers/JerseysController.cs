@@ -39,11 +39,9 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             _context.Jerseys.Add(new Jersey
             {
                 Name = Jersey.Name,
-                Body=Jersey.Body,
                 IsKeeper=Jersey.IsKeeper,
                 TeamId=Jersey.TeamId
-                ,Shorts=Jersey.Shorts
-                ,Socks=Jersey.Socks,
+            
                 
             });
             _context.SaveChanges();
@@ -55,9 +53,7 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             var jersey = await _context.Jerseys.FindAsync(Jersey.Id);
             
             jersey.Name = Jersey.Name;
-            jersey.Body = Jersey.Body;
-            jersey.Shorts = Jersey.Shorts;
-            jersey.Socks = Jersey.Socks;
+           
             jersey.TeamId = Jersey.TeamId;
             jersey.IsKeeper = Jersey.IsKeeper;
             

@@ -59,11 +59,10 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             var kits = _context.Jerseys.Include(x=>x.JerseyImages).Where(x => x.TeamId == teamId && x.IsKeeper == false).Select(x=>new ResultJerseyDto
             {
 
-                Body = x.Body,
+           
                 Id = x.Id,
                 Name = x.Name,
-                Shorts = x.Shorts,
-                Socks = x.Socks,
+
                 TeamId = x.TeamId,
                 JerseyImages = x.JerseyImages.Select(x => new ResultJerseyImageDto
                 {
