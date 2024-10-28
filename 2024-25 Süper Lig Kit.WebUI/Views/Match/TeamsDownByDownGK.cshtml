@@ -1,0 +1,113 @@
+﻿@{
+    ViewData["Title"] = "TeamsDownByDown";
+}
+<button onclick="abc()">btn</button>
+<canvas width="8000" height="12000" id="myCanvas"></canvas>
+<script type="text/javascript">
+    async function abc() {
+        $.ajax({
+            url: '@Url.Action("TeamDownGK", "Match")',
+            type: "GET",
+            data: {},
+            success: function (data) {
+                drawTeams(data);
+            }
+        });
+    }
+
+    function loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+
+
+
+    async function drawTeams(teams) {
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        let x = 0;
+        let y = 0;
+
+        ctx.font = "bold 24px Arial";
+        ctx.fillStyle = "black";
+        ctx.textAlign = "center";
+
+        for (var week = 0; week < 10; week++) {
+            ctx.fillText("Hafta " + (week + 1), x + 350, 30);
+            x += 200;
+        }
+        x = 0;
+        y =+ 50;
+        ctx.beginPath();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.moveTo(0, y );
+        ctx.lineTo(canvas.width, y );
+        ctx.stroke();
+        for (let i = 0; i < teams.length - 1; i++) {
+            const team = teams[i];
+            const jerseys = team.kits;
+
+            try {
+                // Load and draw team logo
+                if (team.homeTeamLogo) {
+                    const teamLogo = await loadImage(team.homeTeamLogo);
+                    ctx.drawImage(teamLogo, x+70, y+205);
+                }
+
+                x += 100;
+                // Draw vertical separator
+                let separatorX = x + 150;
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.moveTo(separatorX, 0);
+                ctx.lineTo(separatorX, canvas.height);
+                ctx.stroke();
+                // Load and draw jerseys
+                for (let j = 0; j < jerseys.length; j++) {
+                    const jersey = jerseys[j].kit;
+                    const isBye = jerseys[j].isBye;
+
+                    // Determine jersey image source
+                    const jerseySource = jersey ? jersey.imgPath : '/kits/blank.png';
+
+                    const jerseyImg = await loadImage(jerseySource);
+                    ctx.drawImage(jerseyImg, x, y, 500, 500);
+
+                    x += 200;
+
+                    // Draw vertical separator
+                    let separatorX = x + 150;
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(separatorX, 0);
+                    ctx.lineTo(separatorX, canvas.height);
+                    ctx.stroke();
+                }
+
+                // Draw horizontal separator
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.moveTo(0, y + 525);
+                ctx.lineTo(canvas.width, y + 525);
+                ctx.stroke();
+
+               
+
+
+                // Reset x and increment y for next row
+                y += 550;
+                x = 0;
+            } catch (error) {
+                console.error('Error loading images:', error);
+            }
+        }
+    }
+</script>

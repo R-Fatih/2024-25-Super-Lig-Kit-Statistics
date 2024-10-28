@@ -44,14 +44,13 @@
 
 
 <script type="text/javascript">
-  
+
     function abc() {
         $.ajax({
             url: '@Url.Action("CrossTable2", "Match")',
             type: "GET",
-            data: { },
+            data: {},
             success: function (data) {
-
                 var canvas = document.getElementById('myCanvas');
                 var ctx = canvas.getContext('2d');
                 var x = 0;
@@ -61,23 +60,32 @@
                 console.log(data);
 
                 var jerseys = data;
-                // jerseyImages dizisindeki ilk elemanın imgPath'ini kullanıyoruz
+                // Draw team logos in the header row
                 x = 350;
                 for (var i = 0; i < jerseys.length; i++) {
-                    
                     var team = jerseys[i];
                     var teamLogo = team.homeTeamLogo;
                     var teamLogosrc = new Image();
                     teamLogosrc.src = teamLogo;
                     ctx.drawImage(teamLogosrc, x, y);
-                    
-                    x += 400;
 
+                    // Draw vertical separator after each logo in header
+                    let separatorX = x + 210; // Position after the logo + some spacing
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(separatorX, 0);
+                    ctx.lineTo(separatorX, canvas.height);
+                    ctx.stroke();
+
+                    x += 400;
                 }
+
+                // Draw the main content with team logos and kits
                 y += 300;
                 x = 0;
                 for (var i = 0; i < jerseys.length; i++) {
-					var team = jerseys[i];
+                    var team = jerseys[i];
                     var kits = team.kits;
                     var teamLogo = team.homeTeamLogo;
                     var teamLogosrc = new Image();
@@ -85,53 +93,49 @@
                     ctx.drawImage(teamLogosrc, x, y);
 
                     for (var j = 0; j < kits.length; j++) {
-						var kit = kits[j];
-						var homeKit = kit.homeKit;
-						var awayKit = kit.awayKit;
-						console.log(homeKit);
-						console.log(awayKit);
+                        var kit = kits[j];
+                        var homeKit = kit.homeKit;
+                        var awayKit = kit.awayKit;
 
                         var homeKitImg = new Image();
                         var awayKitImg = new Image();
-                      
+
                         if (homeKit != null) {
-
-
                             homeKitImg.src = homeKit.imgPath;
                         } else {
                             homeKitImg.src = '/kits/blank.png';
-
                         }
                         if (awayKit != null) {
                             awayKitImg.src = awayKit.imgPath;
-
                         } else {
                             awayKitImg.src = '/kits/blank.png';
-
                         }
 
-                         x += 50;
-
+                        x += 50;
                         ctx.drawImage(homeKitImg, x, y, 500, 500);
-							x += 200;
+                        x += 200;
                         ctx.drawImage(awayKitImg, x, y, 500, 500);
                         x += 150;
+                    }
 
-						
-					}
+                    // Draw horizontal separator after each team's row
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(0, y + 525);  // Position slightly before the next row
+                    ctx.lineTo(canvas.width, y + 525);
+                    ctx.stroke();
+
+                    // Draw vertical separator after the full team section
+                    let separatorX = x + 50;  // Add some padding after the last kit
+                    ctx.beginPath();
+                    ctx.moveTo(separatorX, 0);
+                    ctx.lineTo(separatorX, canvas.height);
+                    ctx.stroke();
+
                     x = 0;
                     y += 550;
-
-				}
-               
-
-
-                console.log('kitcount');
-                //console.log(jersey.length);
-
-
-                // Option'lara resimleri arka plan olarak ekliyoruz
-
+                }
             }
         });
     }

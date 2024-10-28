@@ -5,6 +5,7 @@ using _2024_25_Süper_Lig_Kit.WebApi.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
 {
@@ -83,7 +84,89 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             return Ok(crossTable);
         }
 
+        [HttpGet("GetAllTeamsKitsWeeks")]
+        public async Task<IActionResult> GetAllTeamsKitsWeeks()
+        {
 
+            // Önce sistemdeki tüm haftaları bulalım
+            // Önce tüm haftaları alalım
+            var allWeeks = _context.Matches.Select(m => m.Week).Distinct().OrderBy(w => w).ToList();
+
+            // Önce takım ve maç bilgilerini alalım
+            var matchData = _context.Teams.Select(team => new
+            {
+                newTeam = team.Name,
+                HomeTeamLogo = team.Logo,
+                TeamId = team.TeamId,
+                Matches = _context.Matches
+                    .Where(x => x.HomeTeamId == team.TeamId || x.AwayTeamId == team.TeamId)
+                    .Select(match => new
+                    {
+                        Week = match.Week,
+                        Kit = match.HomeTeamId == team.TeamId ? match.HomeTeamJerseyImage : match.AwayTeamJerseyImage,
+                    })
+                    .ToList()
+            }).ToList();
+
+            // Sonra in-memory'de birleştirme yapalım
+            var table = matchData.Select(team => new
+            {
+                newTeam = team.newTeam,
+                HomeTeamLogo = team.HomeTeamLogo,
+                Kits = allWeeks.Select(week => new
+                {
+                    Week = week,
+                    Kit = team.Matches.FirstOrDefault(m => m.Week == week)?.Kit,
+                    IsBye = !team.Matches.Any(m => m.Week == week)
+                })
+                .OrderBy(k => k.Week)
+                .ToList()
+            }).ToList();
+
+            return Ok(table);
+        }
+
+        [HttpGet("GetAllTeamsKitsWeeksGK")]
+        public async Task<IActionResult> GetAllTeamsKitsWeeksGK()
+        {
+
+            // Önce sistemdeki tüm haftaları bulalım
+            // Önce tüm haftaları alalım
+            var allWeeks = _context.Matches.Select(m => m.Week).Distinct().OrderBy(w => w).ToList();
+
+            // Önce takım ve maç bilgilerini alalım
+            var matchData = _context.Teams.Select(team => new
+            {
+                newTeam = team.Name,
+                HomeTeamLogo = team.Logo,
+                TeamId = team.TeamId,
+                Matches = _context.Matches
+                    .Where(x => x.HomeTeamId == team.TeamId || x.AwayTeamId == team.TeamId)
+                    .Select(match => new
+                    {
+                        Week = match.Week,
+                        Kit = match.HomeTeamId == team.TeamId ? match.HomeTeamJerseyImageGK : match.AwayTeamJerseyImageGK,
+                    })
+                    .ToList()
+            }).ToList();
+
+            // Sonra in-memory'de birleştirme yapalım
+            var table = matchData.Select(team => new
+            {
+                newTeam = team.newTeam,
+                HomeTeamLogo = team.HomeTeamLogo,
+                Kits = allWeeks.Select(week => new
+                {
+                    Week = week,
+                    Kit = team.Matches.FirstOrDefault(m => m.Week == week)?.Kit,
+                    IsBye = !team.Matches.Any(m => m.Week == week)
+                })
+                .OrderBy(k => k.Week)
+                .ToList()
+            }).ToList();
+
+            return Ok(table);
+        }
         [HttpPost]
         public IActionResult CreateMatch(CreateMatchDtoForPost createMatchDto)
         {
@@ -109,6 +192,40 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             });
             _context.SaveChanges();
             return Created("", createMatchDto);
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> Update(UpdateMatchDto dto)
+        {
+            var match = await _context.Matches.FirstOrDefaultAsync(x => x.MatchId == dto.MatchId);
+            if(match==null)
+                return NotFound();
+
+            var client = new HttpClient();
+            var responseMessage = await client.GetAsync($"https://localhost:7245/api/Mackoliks/get?adres={dto.Maçkolik}");
+            if (responseMessage.IsSuccessStatusCode)
+            {
+                var jsonData = await responseMessage.Content.ReadAsStringAsync();
+                var values = JsonConvert.DeserializeObject<ResultMatchDto>(jsonData);
+
+                match.Date = values.Date;
+                match.HomeMS = values.HomeMS;
+                match.AwayMS = values.AwayMS;
+                match.Maçkolik = dto.Maçkolik;
+
+            }
+             _context.Update(match);
+            await _context.SaveChangesAsync();
+            return Ok();
+
+
+        }
+
+        [HttpGet("RemainingMatches")]
+        public async Task<IActionResult> RemainingMatches()
+        {
+            var remain=await _context.Matches.Where(x => x.Maçkolik==null).ToListAsync();
+            return Ok(remain);
         }
     }
 }

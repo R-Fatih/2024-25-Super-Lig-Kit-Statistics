@@ -4,6 +4,7 @@ using _2024_25_Süper_Lig_Kit.Dto.MatchDtos;
 using _2024_25_Süper_Lig_Kit.Dto.RefereeDtos;
 using _2024_25_Süper_Lig_Kit.Dto.TeamDtos;
 using _2024_25_Süper_Lig_Kit.WebUI.Entities;
+using _2024_25_Süper_Lig_Kit.WebUI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
@@ -38,6 +39,14 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
             return View(matches);
         }
 
+        public async Task<IActionResult> TeamsDownByDown()
+        {
+            return View();
+        }
+        public async Task<IActionResult> TeamsDownByDownGK()
+        {
+            return View();
+        }
 
         public async Task<IActionResult> GetMatchesByTeam(int id)
         {
@@ -51,7 +60,7 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         {
             var client = _client.CreateClient();
             var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches/GetMatchesByReferee?refereeId={id}");
-            return View("Index",matches);
+            return View("Index", matches);
         }
 
         public async Task<IActionResult> CrossTable()
@@ -64,6 +73,19 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         {
             var client = _client.CreateClient();
             var match = await client.GetFromJsonAsync<List<Class1>>($"https://localhost:7245/api/Matches/CrossTable\r\n");
+            return Json(match);
+        }
+
+        public async Task<IActionResult> TeamDown()
+        {
+            var client = _client.CreateClient();
+            var match = await client.GetFromJsonAsync<List<TeamDownDto>>($"https://localhost:7245/api/Matches/GetAllTeamsKitsWeeks");
+            return Json(match);
+        }
+        public async Task<IActionResult> TeamDownGK()
+        {
+            var client = _client.CreateClient();
+            var match = await client.GetFromJsonAsync<List<TeamDownDto>>($"https://localhost:7245/api/Matches/GetAllTeamsKitsWeeksGK");
             return Json(match);
         }
         [HttpGet]
@@ -79,12 +101,16 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         [HttpPost]
         public async Task<IActionResult> Create(CreateMatchDto match)
         {
-            var matchtemp = await Maçkolik(match.Maçkolik);
-            match.Date = matchtemp.Date;
-            match.HomeMS = matchtemp.HomeMS;
-            match.AwayMS = matchtemp.AwayMS;
+            if (match.Maçkolik != null)
+            {
 
-            match.HomeTeamJerseyImageGKId= int.Parse(match.hg);
+                var matchtemp = await Maçkolik(match.Maçkolik);
+                match.Date = matchtemp.Date;
+                match.HomeMS = matchtemp.HomeMS;
+                match.AwayMS = matchtemp.AwayMS;
+
+            }
+            match.HomeTeamJerseyImageGKId = int.Parse(match.hg);
             match.HomeTeamJerseyImageId = int.Parse(match.hp);
             match.RefereeJerseyImageId = int.Parse(match.rf);
             match.AwayTeamJerseyImageId = int.Parse(match.ap);
@@ -114,7 +140,7 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
                 RefereeJerseyImageId = match.RefereeJerseyImageId,
                 Week = match.Week,
                 Maçkolik = match.Maçkolik,
-                
+
             });
             if (response.IsSuccessStatusCode)
             {
@@ -125,7 +151,25 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
 
         [HttpGet]
-        public async Task< ActionResult> GetHomeTeamJerseyGK(int homeTeamId)
+        public async Task<IActionResult> Update(int id)
+        {
+            ViewBag.id = id;
+            return View(new UpdateMatchDto { MatchId=id});
+        }
+        [HttpPost]
+        public async Task<IActionResult> Update(UpdateMatchDto dto)
+        {
+            var client = _client.CreateClient();
+            var responseMessage = await client.PutAsJsonAsync($"https://localhost:7245/api/Matches",dto);
+            if (responseMessage.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            return View(dto);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult> GetHomeTeamJerseyGK(int homeTeamId)
         {
             var client = _client.CreateClient();
             var jerseys = await client.GetFromJsonAsync<List<ResultJerseyDto>>($"https://localhost:7245/api/Teams/GetKeeperJerseysByTeam?teamId={homeTeamId}");
