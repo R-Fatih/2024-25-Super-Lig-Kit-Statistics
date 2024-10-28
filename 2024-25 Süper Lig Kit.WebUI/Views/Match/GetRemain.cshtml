@@ -1,0 +1,51 @@
+﻿@using _2024_25_Süper_Lig_Kit.Dto.MatchDtos
+@model (List<ResultMatchDto>,UpdateMatchDto)
+@{
+	ViewData["Title"] = "GetRemain";
+}
+
+
+<div class="container">
+	<div class="row">
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+					<h4 class="card-title
+						">
+						Kalan Maçlar
+					</h4>
+				</div>
+				<div class="card-body">
+					<div class="table-responsive">
+						<table class="table table-striped">
+							<thead>
+								<tr>
+									<th>Ev Sahibi</th>
+									<th>Deplasman</th>
+									<th>Hafta</th>
+								</tr>
+							</thead>
+							<tbody>
+								@foreach (var item in Model.Item1)
+								{
+									<tr>
+										<form method="post">
+										<td>@item.HomeTeamId</td>
+										<td>@item.AwayTeamId</td>
+
+										<td>@item.Week</td>
+										<td><input asp-for="Item2.Maçkolik" /></td>
+										<input asp-for="Item2.MatchId" value="@item.MatchId" type="hidden"/>
+										<td><button type="submit" class="btn btn-primary">Güncelle</button></td>
+										</form>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

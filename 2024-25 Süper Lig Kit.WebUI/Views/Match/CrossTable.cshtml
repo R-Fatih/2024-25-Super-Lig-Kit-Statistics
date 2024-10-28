@@ -6,7 +6,7 @@
 }
 
 
-<table class="table table-striped table-wrap">
+@* <table class="table table-striped table-wrap">
     <thead>
         <tr>
             <th>Id</th>
@@ -38,107 +38,143 @@
             </tr>
         }
     </tbody>
-</table>
+</table> *@
 <button onclick="abc()">btn</button>
 <canvas width="8000" height="12000" id="myCanvas"></canvas>
 
 
 <script type="text/javascript">
-
-    function abc() {
-        $.ajax({
-            url: '@Url.Action("CrossTable2", "Match")',
-            type: "GET",
-            data: {},
-            success: function (data) {
-                var canvas = document.getElementById('myCanvas');
-                var ctx = canvas.getContext('2d');
-                var x = 0;
-                var y = 0;
-                var maxHeight = 0;
-
-                console.log(data);
-
-                var jerseys = data;
-                // Draw team logos in the header row
-                x = 350;
-                for (var i = 0; i < jerseys.length; i++) {
-                    var team = jerseys[i];
-                    var teamLogo = team.homeTeamLogo;
-                    var teamLogosrc = new Image();
-                    teamLogosrc.src = teamLogo;
-                    ctx.drawImage(teamLogosrc, x, y);
-
-                    // Draw vertical separator after each logo in header
-                    let separatorX = x + 210; // Position after the logo + some spacing
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#000000';
-                    ctx.lineWidth = 2;
-                    ctx.moveTo(separatorX, 0);
-                    ctx.lineTo(separatorX, canvas.height);
-                    ctx.stroke();
-
-                    x += 400;
-                }
-
-                // Draw the main content with team logos and kits
-                y += 300;
-                x = 0;
-                for (var i = 0; i < jerseys.length; i++) {
-                    var team = jerseys[i];
-                    var kits = team.kits;
-                    var teamLogo = team.homeTeamLogo;
-                    var teamLogosrc = new Image();
-                    teamLogosrc.src = teamLogo;
-                    ctx.drawImage(teamLogosrc, x, y);
-
-                    for (var j = 0; j < kits.length; j++) {
-                        var kit = kits[j];
-                        var homeKit = kit.homeKit;
-                        var awayKit = kit.awayKit;
-
-                        var homeKitImg = new Image();
-                        var awayKitImg = new Image();
-
-                        if (homeKit != null) {
-                            homeKitImg.src = homeKit.imgPath;
-                        } else {
-                            homeKitImg.src = '/kits/blank.png';
-                        }
-                        if (awayKit != null) {
-                            awayKitImg.src = awayKit.imgPath;
-                        } else {
-                            awayKitImg.src = '/kits/blank.png';
-                        }
-
-                        x += 50;
-                        ctx.drawImage(homeKitImg, x, y, 500, 500);
-                        x += 200;
-                        ctx.drawImage(awayKitImg, x, y, 500, 500);
-                        x += 150;
-                    }
-
-                    // Draw horizontal separator after each team's row
-                    ctx.beginPath();
-                    ctx.strokeStyle = '#000000';
-                    ctx.lineWidth = 2;
-                    ctx.moveTo(0, y + 525);  // Position slightly before the next row
-                    ctx.lineTo(canvas.width, y + 525);
-                    ctx.stroke();
-
-                    // Draw vertical separator after the full team section
-                    let separatorX = x + 50;  // Add some padding after the last kit
-                    ctx.beginPath();
-                    ctx.moveTo(separatorX, 0);
-                    ctx.lineTo(separatorX, canvas.height);
-                    ctx.stroke();
-
-                    x = 0;
-                    y += 550;
-                }
-            }
+    // Ana fonksiyon
+    function initializeCrossTable() {
+        // Event listener ekleyerek sayfanın yüklenmesini bekleyelim
+        document.addEventListener('DOMContentLoaded', function () {
+            abc();
         });
     }
+
+    // ABC fonksiyonunu async olarak tanımlayalım
+    async function abc() {
+        try {
+            const data = await $.ajax({
+                url: '@Url.Action("CrossTable2", "Match")',
+                type: "GET",
+                data: {}
+            });
+            await get(data);
+        } catch (error) {
+            console.error("Error in abc function:", error);
+        }
+    }
+
+    // Resim yükleme yardımcı fonksiyonu
+    function loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+
+    // Get fonksiyonunu async olarak düzenleyelim
+    async function get(data) {
+        try {
+            const canvas = document.getElementById('myCanvas');
+            const ctx = canvas.getContext('2d');
+            let x = 0;
+            let y = 0;
+
+            console.log(data);
+            const jerseys = data;
+
+            // Header row için team logolarını çizelim
+            x = 350;
+            for (let i = 0; i < jerseys.length-1; i++) {
+                const team = jerseys[i];
+                const teamLogo = team.homeTeamLogo;
+                const teamLogoImg = await loadImage(teamLogo);
+                ctx.drawImage(teamLogoImg, x, y);
+
+                // Her logodan sonra dikey ayraç
+
+                let separatorX = x + 150;
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.moveTo(separatorX, 0);
+                ctx.lineTo(separatorX, canvas.height);
+                ctx.stroke();
+                x += 400;
+            }
+
+            // Ana içeriği çizelim
+            y += 300;
+            x = 0;
+            for (let i = 0; i < jerseys.length-1; i++) {
+                const team = jerseys[i];
+                const kits = team.kits;
+                const teamLogo = team.homeTeamLogo;
+                const teamLogoImg = await loadImage(teamLogo);
+                ctx.drawImage(teamLogoImg, x+40, y+205);
+              
+
+                // Draw vertical separator
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.moveTo(x + 170, 0);
+                ctx.lineTo(x + 170, canvas.height);
+                ctx.stroke();
+                for (let j = 0; j < kits.length; j++) {
+                    const kit = kits[j];
+                    const homeKitPath = kit.homeKit ? kit.homeKit.imgPath : '/kits/blank.png';
+                    const awayKitPath = kit.awayKit ? kit.awayKit.imgPath : '/kits/blank.png';
+
+                    // Home kit'i yükle ve çiz
+                    x += 50;
+                    const homeKitImg = await loadImage(homeKitPath);
+                    ctx.drawImage(homeKitImg, x, y, 500, 500);
+
+                    // Away kit'i yükle ve çiz
+                    x += 200;
+                    const awayKitImg = await loadImage(awayKitPath);
+                    ctx.drawImage(awayKitImg, x, y, 500, 500);
+
+                    x += 150;
+                    let separatorX = x + 210;
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(separatorX, 0);
+                    ctx.lineTo(separatorX, canvas.height);
+                    ctx.stroke();
+                }
+
+                // Her takım satırından sonra yatay ayraç
+                ctx.beginPath();
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.moveTo(0, y + 525);
+                ctx.lineTo(canvas.width, y + 525);
+                ctx.stroke();
+
+                // Tam takım bölümünden sonra dikey ayraç
+                let separatorX = x + 50;
+                ctx.beginPath();
+                ctx.moveTo(separatorX, 0);
+                ctx.lineTo(separatorX, canvas.height);
+                ctx.stroke();
+
+                x = 0;
+                y += 550;
+            }
+        } catch (error) {
+            console.error("Error in get function:", error);
+        }
+    }
+
+    // Sayfanın yüklenmesi ile başlat
+    initializeCrossTable();
 </script>
 <script>
     function we() {

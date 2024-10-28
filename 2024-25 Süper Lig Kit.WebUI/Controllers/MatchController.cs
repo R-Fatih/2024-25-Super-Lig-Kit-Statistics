@@ -169,6 +169,31 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> GetRemain()
+        {
+            var client = _client.CreateClient();
+            var jerseys = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches/RemainingMatches");
+
+            var a = (jerseys, new UpdateMatchDto());
+            return View(a);
+
+        }
+
+        [HttpPost]
+		public async Task<IActionResult> GetRemain([Bind(Prefix = "Item1")] List<ResultMatchDto> match1, [Bind(Prefix ="Item2")] UpdateMatchDto matchdto)
+		{
+			
+            var client = _client.CreateClient();
+			var responseMessage = await client.PutAsJsonAsync($"https://localhost:7245/api/Matches", matchdto);
+			if (responseMessage.IsSuccessStatusCode)
+			{
+				return RedirectToAction("Index", "Home");
+			}
+
+			return View();
+		}
+
+		[HttpGet]
         public async Task<ActionResult> GetHomeTeamJerseyGK(int homeTeamId)
         {
             var client = _client.CreateClient();
