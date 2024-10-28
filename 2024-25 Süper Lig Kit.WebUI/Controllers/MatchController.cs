@@ -222,6 +222,20 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
             return Json(jerseys);
         }
 
+        public IActionResult RefWeek()
+        {
+            return View();
+        }
+        [HttpGet]
+        public async Task<ActionResult> GetRefWeek()
+        {
+            var client = _client.CreateClient();
+
+            // Takım ID'sine göre formaları alın
+            var jerseys = await client.GetFromJsonAsync<List<RefereeKitDto>>($"https://localhost:7245/api/Matches/RefereeWeek");
+
+            return Json(jerseys);
+        }
         public async Task<ResultMatchDto> Maçkolik(int? id)
         {
             var client = _client.CreateClient();

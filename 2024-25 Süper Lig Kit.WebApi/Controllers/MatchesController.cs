@@ -227,5 +227,19 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             var remain=await _context.Matches.Where(x => x.Maçkolik==null).ToListAsync();
             return Ok(remain);
         }
+
+
+        [HttpGet("RefereeWeek")]
+        public async Task<IActionResult> RefereeWeek()
+        {
+            
+            var matches= await _context.Matches.GroupBy(x=>x.Week).Select(t=>new
+            {
+                Week = t.Key,
+                kit = t.Select(x => x.RefereeJerseyImage).ToList(),
+            }).ToListAsync();
+
+            return Ok(matches);
+        }
     }
 }

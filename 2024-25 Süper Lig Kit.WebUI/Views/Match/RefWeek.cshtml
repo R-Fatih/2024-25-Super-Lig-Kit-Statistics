@@ -1,0 +1,143 @@
+﻿
+@{
+    ViewData["Title"] = "RefWeek";
+}
+
+<button onclick="abc()">btn</button>
+<canvas width="8000" height="12000" id="myCanvas"></canvas>
+<script type="text/javascript">
+    function initializeCrossTable() {
+        // Event listener ekleyerek sayfanın yüklenmesini bekleyelim
+        document.addEventListener('DOMContentLoaded', function () {
+            abc();
+        });
+    }
+
+
+    async function abc() {
+        try {
+            const data = await $.ajax({
+                url: '@Url.Action("GetRefWeek", "Match")',
+                type: "GET",
+                data: {}
+            });
+            await get(data);
+        } catch (error) {
+            console.error("Error in abc function:", error);
+        }
+    }
+
+    // Resim yükleme yardımcı fonksiyonu
+    function loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+    async function get(data) {
+        try {
+            const canvas = document.getElementById('myCanvas');
+            const ctx = canvas.getContext('2d');
+            let x = 0;
+            let y = 0;
+
+            ctx.font = "bold 24px Arial";
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+
+            for (var week = 0; week < 9; week++) {
+                ctx.fillText("Maç " + (week + 1), x + 310, 30);
+                x += 200;
+            }
+
+            console.log(data);
+            const jerseys = data;
+
+            // Header row için team logolarını çizelim
+            x = 350;
+            // for (let i = 0; i < jerseys.length ; i++) {
+            //     // const team = jerseys[i];
+            //     // const teamLogo = team.homeTeamLogo;
+            //     // const teamLogoImg = await loadImage(teamLogo);
+            //     // ctx.drawImage(teamLogoImg, x, y);
+
+            //     // Her logodan sonra dikey ayraç
+
+            //     // let separatorX = x + 150;
+            //     // ctx.beginPath();
+            //     // ctx.strokeStyle = '#000000';
+            //     // ctx.lineWidth = 2;
+            //     // ctx.moveTo(separatorX, 0);
+            //     // ctx.lineTo(separatorX, canvas.height);
+            //     // ctx.stroke();
+            //     x += 400;
+            // }
+
+            // Ana içeriği çizelim
+            y += 40;
+            x = 0;
+            for (let i = 0; i < jerseys.length ; i++) {
+                const team = jerseys[i];
+                const week = team.week;
+                const kits = team.kit;
+                ctx.fillText("Hafta " + (week), x + 80, y+200);
+
+
+                // Draw vertical separator
+                ctx.beginPath();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.moveTo(x + 170, 0);
+                ctx.lineTo(x + 170, canvas.height);
+                ctx.stroke();
+                for (let j = 0; j < kits.length; j++) {
+                    const kit = kits[j];
+                    const homeKitPath = kit.imgPath;
+                    
+
+
+                    // Home kit'i yükle ve çiz
+                    x += 50;
+                    const homeKitImg = await loadImage(homeKitPath);
+                    ctx.drawImage(homeKitImg, x, y, 500, 500);
+
+                    // Away kit'i yükle ve çiz
+                  
+                    x += 150;
+                    let separatorX = x + 210;
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(separatorX, 0);
+                    ctx.lineTo(separatorX, canvas.height);
+                    ctx.stroke();
+                }
+
+                // Her takım satırından sonra yatay ayraç
+                ctx.beginPath();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.moveTo(0, y + 525);
+                ctx.lineTo(canvas.width, y + 525);
+                ctx.stroke();
+
+                // Tam takım bölümünden sonra dikey ayraç
+                // let separatorX = x + 50;
+                // ctx.beginPath();
+                // ctx.moveTo(separatorX, 0);
+                // ctx.lineTo(separatorX, canvas.height);
+                // ctx.stroke();
+
+                x = 0;
+                y += 550;
+            }
+        } catch (error) {
+            console.error("Error in get function:", error);
+        }
+    }
+
+    // Sayfanın yüklenmesi ile başlat
+    initializeCrossTable();
+</script>
