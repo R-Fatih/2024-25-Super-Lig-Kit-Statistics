@@ -20,7 +20,8 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Context
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=2425SL;Trusted_Connection=True;MultipleActiveResultSets=true");
+            optionsBuilder.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=2425SL;Trusted_Connection=True;MultipleActiveResultSets=true;Connect Timeout=0;");
+
         }
         public DbSet<Match> Matches { get; set; }
         public DbSet<Team> Teams { get; set; }

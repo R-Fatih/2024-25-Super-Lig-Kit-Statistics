@@ -33,17 +33,17 @@
         let y = 0;
 
         ctx.font = "bold 24px Arial";
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "white";
         ctx.textAlign = "center";
 
-        for (var week = 0; week < 10; week++) {
+        for (var week = 0; week < 11; week++) {
             ctx.fillText("Hafta " + (week + 1), x + 350, 30);
             x += 200;
         }
         x = 0;
         y =+ 50;
         ctx.beginPath();
-        ctx.strokeStyle = '#000000';
+        ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
         ctx.moveTo(0, y );
         ctx.lineTo(canvas.width, y );
@@ -63,7 +63,7 @@
                 // Draw vertical separator
                 let separatorX = x + 150;
                 ctx.beginPath();
-                ctx.strokeStyle = '#000000';
+                ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 2;
                 ctx.moveTo(separatorX, 0);
                 ctx.lineTo(separatorX, canvas.height);
@@ -84,7 +84,7 @@
                     // Draw vertical separator
                     let separatorX = x + 150;
                     ctx.beginPath();
-                    ctx.strokeStyle = '#000000';
+                    ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 2;
                     ctx.moveTo(separatorX, 0);
                     ctx.lineTo(separatorX, canvas.height);
@@ -93,7 +93,7 @@
 
                 // Draw horizontal separator
                 ctx.beginPath();
-                ctx.strokeStyle = '#000000';
+                ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 2;
                 ctx.moveTo(0, y + 525);
                 ctx.lineTo(canvas.width, y + 525);

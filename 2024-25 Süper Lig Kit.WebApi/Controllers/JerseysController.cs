@@ -41,8 +41,8 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
                 Name = Jersey.Name,
                 IsKeeper=Jersey.IsKeeper,
                 TeamId=Jersey.TeamId
-            
-                
+            ,Path = " "
+
             });
             _context.SaveChanges();
             return Created("", Jersey);
