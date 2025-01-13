@@ -56,10 +56,10 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
         [HttpGet("GetKitsByTeam")]
         public IActionResult GetKitsByTeam(int teamId)
         {
-            var kits = _context.Jerseys.Include(x=>x.JerseyImages).Where(x => x.TeamId == teamId && x.IsKeeper == false).Select(x=>new ResultJerseyDto
+            var kits = _context.Jerseys.Include(x => x.JerseyImages).Where(x => x.TeamId == teamId && x.IsKeeper == false).Select(x => new ResultJerseyDto
             {
 
-           
+
                 Id = x.Id,
                 Name = x.Name,
 

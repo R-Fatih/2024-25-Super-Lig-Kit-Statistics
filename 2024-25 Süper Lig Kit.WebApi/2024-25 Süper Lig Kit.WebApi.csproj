@@ -6,7 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>_2024_25_Süper_Lig_Kit.WebApi</RootNamespace>
   </PropertyGroup>
-
+	 <PropertyGroup>
+		   <ServerGarbageCollection>true</ServerGarbageCollection>
+		   <GarbageCollectionAdaptationMode>1</GarbageCollectionAdaptationMode>
+		
+	</PropertyGroup>
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.62" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />

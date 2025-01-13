@@ -38,7 +38,10 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
             var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches/GetMatchesByTeam?teamId={id}");
             return View(matches);
         }
-
+        public async Task<IActionResult> TeamStatistics()
+        {
+            return View();
+        }
         public async Task<IActionResult> TeamsDownByDown()
         {
             return View();

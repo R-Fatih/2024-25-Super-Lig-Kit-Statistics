@@ -39,11 +39,46 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
         {
             var matches =await _context.Matches.Include(x=>x.HomeTeam).Include(y=>y.AwayTeam ).Include(z=>z.Referee)
                 .Include(w=>w.HomeTeamJerseyImageGK)
-                .Include(w=>w.HomeTeamJerseyImage)
+                .Include(w=>w.HomeTeamJerseyImage).ThenInclude(x=>x.Jersey)
                 .Include(w=>w.RefereeJerseyImage)
                 .Include(w=>w.AwayTeamJerseyImageGK)
-                .Include(w=>w.AwayTeamJerseyImage)
-                .Where(x => x.HomeTeamId == teamId || x.AwayTeamId == teamId).OrderBy(x=>x.Week).ToListAsync();
+                .Include(w=>w.AwayTeamJerseyImage).ThenInclude(x => x.Jersey)
+                .Where(x => x.HomeTeamId == teamId || x.AwayTeamId == teamId).OrderBy(x=>x.Week)
+                .Select(x =>new Match
+                {
+                   HomeMS= x.HomeMS,
+                   AwayMS= x.AwayMS,
+                    HomeTeamId= x.HomeTeamId,
+                    AwayTeamId= x.AwayTeamId,
+                    HomeTeamJerseyImage= new JerseyImage
+                    {
+                        ImgPath = x.HomeTeamJerseyImage.ImgPath,
+                        JerseyId = x.HomeTeamJerseyImage.JerseyId,
+                        JerseyImageId = x.HomeTeamJerseyImage.JerseyImageId,
+                        Jersey = new Jersey
+                        {
+                            Name = x.HomeTeamJerseyImage.Jersey.Name,
+                            Path = x.HomeTeamJerseyImage.Jersey.Path,
+                            Id = x.HomeTeamJerseyImage.Jersey.Id,
+                            IsKeeper = x.HomeTeamJerseyImage.Jersey.IsKeeper
+                        }
+                    },
+                    AwayTeamJerseyImage = new JerseyImage
+                    {
+                        ImgPath = x.AwayTeamJerseyImage.ImgPath,
+                        JerseyId = x.AwayTeamJerseyImage.JerseyId,
+                        JerseyImageId = x.AwayTeamJerseyImage.JerseyImageId,
+                        Jersey = new Jersey
+                        {
+                            Name = x.AwayTeamJerseyImage.Jersey.Name,
+                            Path = x.AwayTeamJerseyImage.Jersey.Path,
+                            Id = x.AwayTeamJerseyImage.Jersey.Id,
+                            IsKeeper = x.AwayTeamJerseyImage.Jersey.IsKeeper
+                        }
+                    },
+
+                })
+                .ToListAsync();
             return Ok(matches);
         }
         [HttpGet("GetMatchesByReferee")]
