@@ -1,0 +1,438 @@
+@{
+    ViewData["Title"] = "Hakem Haftalık Forma Kullanım Haritası";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-calendar-week"></i> Hakem Haftalık Forma Kullanım Haritası
+                    </h3>
+                    <p class="card-text mt-2 mb-0">Hakemlerin sezon boyunca haftalık forma tercihlerinin görselleştirilmesi</p>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary active" id="btnCombinedView">
+                                <i class="fas fa-th"></i> Kombine Görünüm
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="btnKitNameView">
+                                <i class="fas fa-list"></i> Forma İsmi
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <label for="zoomRange" class="form-label me-2">Yakınlaştırma:</label>
+                            <input type="range" class="form-range" id="zoomRange" min="0.5" max="2" step="0.1" value="1">
+                            <span class="ms-2" id="zoomValue">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <strong>Nasıl Kullanılır:</strong>
+                                <ul class="mb-0">
+                                    <li>Her satır bir hakemi temsil eder</li>
+                                    <li>Her sütun bir haftayı temsil eder (1-38 hafta)</li>
+                                    <li>Hücredeki görsel o hakemin o hafta kullandığı formayı gösterir</li>
+                                    <li>Fareyi hücrenin üzerine getirin detaylı bilgi için</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="loadingIndicator" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <p class="mt-2">Hakem verileri yükleniyor...</p>
+                    </div>
+
+                    <div id="canvasContainer" class="position-relative" style="display: none;">
+                        <div class="canvas-scroll-container" style="overflow: auto; max-height: 800px; border: 1px solid #ddd; border-radius: 8px;">
+                            <canvas id="refereeHeatmapCanvas" style="display: block;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tooltip -->
+                    <div id="tooltip" class="position-absolute bg-dark text-white p-2 rounded shadow-lg" style="display: none; z-index: 1000; font-size: 12px; max-width: 300px;">
+                        <div id="tooltipContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .canvas-scroll-container::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .canvas-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 6px;
+    }
+    
+    .canvas-scroll-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 6px;
+    }
+    
+    .canvas-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    
+    .form-range {
+        width: 120px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let refereeData = [];
+    let currentViewMode = 'combined'; // 'combined' or 'kitname'
+    let canvas, ctx;
+    let cellWidth = 60;
+    let cellHeight = 80;
+    let headerHeight = 60;
+    let rowLabelWidth = 200;
+    let currentZoom = 1;
+
+    // Initialize
+    initializeCanvas();
+    loadRefereeData();
+    setupEventListeners();
+
+    function initializeCanvas() {
+        canvas = document.getElementById('refereeHeatmapCanvas');
+        ctx = canvas.getContext('2d');
+        
+        // Set initial canvas size
+        canvas.width = rowLabelWidth + (38 * cellWidth); // 38 weeks
+        canvas.height = headerHeight + (20 * cellHeight); // Estimated referee count
+    }
+
+    function setupEventListeners() {
+        // View mode buttons
+        document.getElementById('btnCombinedView').addEventListener('click', function() {
+            setViewMode('combined', this);
+        });
+        
+        document.getElementById('btnKitNameView').addEventListener('click', function() {
+            setViewMode('kitname', this);
+        });
+
+        // Zoom control
+        const zoomRange = document.getElementById('zoomRange');
+        zoomRange.addEventListener('input', function() {
+            currentZoom = parseFloat(this.value);
+            document.getElementById('zoomValue').textContent = Math.round(currentZoom * 100) + '%';
+            applyZoom();
+            drawHeatmap();
+        });
+
+        // Canvas mouse events for tooltip
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseleave', hideTooltip);
+    }
+
+    function setViewMode(mode, button) {
+        currentViewMode = mode;
+        
+        // Update button states
+        document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        drawHeatmap();
+    }
+
+    function applyZoom() {
+        cellWidth = 60 * currentZoom;
+        cellHeight = 80 * currentZoom;
+        headerHeight = 60 * currentZoom;
+        rowLabelWidth = 200 * currentZoom;
+        
+        // Update canvas size
+        const uniqueReferees = [...new Set(refereeData.map(r => r.refereeId))].length;
+        canvas.width = rowLabelWidth + (38 * cellWidth);
+        canvas.height = headerHeight + (uniqueReferees * cellHeight);
+    }
+
+    async function loadRefereeData() {
+        try {
+            const response = await fetch('https://localhost:7245/api/Statics/GetRefereeWeeklyKitUsage');
+            refereeData = await response.json();
+            
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('canvasContainer').style.display = 'block';
+            
+            applyZoom();
+            drawHeatmap();
+        } catch (error) {
+            console.error('Error loading referee data:', error);
+            document.getElementById('loadingIndicator').innerHTML = 
+                '<div class="alert alert-danger">Veri yüklenirken hata oluştu: ' + error.message + '</div>';
+        }
+    }
+
+    function drawHeatmap() {
+        if (!refereeData.length) return;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Set font
+        ctx.font = `${12 * currentZoom}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Draw header (weeks)
+        drawWeekHeaders();
+
+        // Get unique referees
+        const uniqueReferees = [...new Set(refereeData.map(r => r.refereeId))]
+            .map(id => refereeData.find(r => r.refereeId === id))
+            .sort((a, b) => a.refereeName.localeCompare(b.refereeName));
+
+        // Draw referee rows
+        uniqueReferees.forEach((referee, rowIndex) => {
+            drawRefereeRow(referee, rowIndex);
+        });
+    }
+
+    function drawWeekHeaders() {
+        // Header background
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, canvas.width, headerHeight);
+
+        // Border
+        ctx.strokeStyle = '#dee2e6';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, canvas.width, headerHeight);
+
+        // Week numbers
+        ctx.fillStyle = '#495057';
+        ctx.font = `bold ${12 * currentZoom}px Arial`;
+        
+        for (let week = 1; week <= 38; week++) {
+            const x = rowLabelWidth + (week - 1) * cellWidth + cellWidth / 2;
+            const y = headerHeight / 2;
+            
+            ctx.fillText(week.toString(), x, y);
+            
+            // Vertical grid lines
+            ctx.beginPath();
+            ctx.moveTo(rowLabelWidth + week * cellWidth, 0);
+            ctx.lineTo(rowLabelWidth + week * cellWidth, canvas.height);
+            ctx.strokeStyle = '#dee2e6';
+            ctx.stroke();
+        }
+    }
+
+    function drawRefereeRow(referee, rowIndex) {
+        const y = headerHeight + rowIndex * cellHeight;
+
+        // Row background (alternating colors)
+        ctx.fillStyle = rowIndex % 2 === 0 ? '#ffffff' : '#f8f9fa';
+        ctx.fillRect(0, y, canvas.width, cellHeight);
+
+        // Referee label background
+        ctx.fillStyle = '#e9ecef';
+        ctx.fillRect(0, y, rowLabelWidth, cellHeight);
+
+        // Referee name and image
+        drawRefereeLabel(referee, y);
+
+        // Draw kit cells for each week
+        for (let week = 1; week <= 38; week++) {
+            const weekData = refereeData.find(r => 
+                r.refereeId === referee.refereeId && r.week === week
+            );
+            
+            drawKitCell(weekData, week, y);
+        }
+
+        // Horizontal grid line
+        ctx.beginPath();
+        ctx.moveTo(0, y + cellHeight);
+        ctx.lineTo(canvas.width, y + cellHeight);
+        ctx.strokeStyle = '#dee2e6';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+
+   async function drawRefereeLabel(referee, y) {
+        const centerY = y + cellHeight / 2;
+        
+        // Referee name
+        ctx.fillStyle = '#495057';
+        ctx.font = `${11 * currentZoom}px Arial`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        
+        const maxWidth = rowLabelWidth - 20 * currentZoom;
+        const text = referee.refereeName.length > 20 ? 
+            referee.refereeName.substring(0, 17) + '...' : 
+            referee.refereeName;
+        
+        ctx.fillText(text, 10 * currentZoom, centerY);
+                    const jerseySource = referee.imgUrl;
+                             const jerseyImg = await loadImage(jerseySource);
+                                    ctx.drawImage(jerseyImg,(10 * currentZoom)+115, centerY-20,50,50  );
+        // Vertical border
+        ctx.beginPath();
+        ctx.moveTo(rowLabelWidth, y);
+        ctx.lineTo(rowLabelWidth, y + cellHeight);
+        ctx.strokeStyle = '#dee2e6';
+        ctx.stroke();
+    }
+
+    function drawKitCell(weekData, week, y) {
+        const x = rowLabelWidth + (week - 1) * cellWidth;
+        const centerX = x + cellWidth / 2;
+        const centerY = y + cellHeight / 2;
+
+        // Cell border
+        ctx.strokeStyle = '#dee2e6';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, cellWidth, cellHeight);
+
+        if (weekData) {
+            if (currentViewMode === 'combined' && weekData.combinedKitImagePath) {
+                // Draw kit image (simulated)
+                drawKitImage(weekData, centerX, centerY);
+            } else {
+                // Draw kit name
+                drawKitName(weekData, centerX, centerY);
+            }
+        } else {
+            // No data for this week
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(x + 1, y + 1, cellWidth - 2, cellHeight - 2);
+        }
+    }
+           function loadImage(src) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = src;
+            });
+        }
+   async function drawKitImage(weekData, centerX, centerY) {
+        // Since we can't load images easily, we'll simulate with colored rectangles
+        const kitColors = {
+            'Siyah': '#000000',
+            'Sarı': '#FFD700',
+            'Kırmızı': '#FF0000',
+            'Mavi': '#0000FF',
+            'Yeşil': '#008000',
+            'Mor': '#800080',
+            'Turuncu': '#FFA500',
+            'Pembe': '#FFC0CB',
+            'Beyaz': '#FFFFFF'
+        };
+
+            const size = 30 * currentZoom;
+                     const jerseySource = weekData.combinedKitImagePath;
+                         const jerseyImg = await loadImage(jerseySource);
+                            ctx.drawImage(jerseyImg,  centerX-37, centerY-37, 75, 75);
+
+        // const color = kitColors[weekData.kitName] || '#6c757d';
+         
+
+        // ctx.fillStyle = color;
+        // ctx.fillRect(centerX - size/2, centerY - size/2, size, size);
+
+        // // Add border for visibility
+        // ctx.strokeStyle = '#000000';
+        // ctx.lineWidth = 1;
+        // ctx.strokeRect(centerX - size/2, centerY - size/2, size, size);
+
+        // // Add text label
+        // ctx.fillStyle = color === '#FFFFFF' || color === '#FFD700' ? '#000000' : '#FFFFFF';
+        // ctx.font = `${8 * currentZoom}px Arial`;
+        // ctx.textAlign = 'center';
+        // ctx.textBaseline = 'middle';
+        // ctx.fillText(weekData.kitName.substring(0, 3), centerX, centerY);
+    }
+
+    function drawKitName(weekData, centerX, centerY) {
+        ctx.fillStyle = '#495057';
+        ctx.font = `${9 * currentZoom}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const text = weekData.kitName.length > 8 ? 
+            weekData.kitName.substring(0, 6) + '..' : 
+            weekData.kitName;
+        
+        ctx.fillText(text, centerX, centerY);
+    }
+
+    function handleMouseMove(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // Check if we're in the data area
+        if (x < rowLabelWidth || y < headerHeight) {
+            hideTooltip();
+            return;
+        }
+
+        // Calculate week and referee
+        const week = Math.floor((x - rowLabelWidth) / cellWidth) + 1;
+        const refereeIndex = Math.floor((y - headerHeight) / cellHeight);
+
+        if (week >= 1 && week <= 38) {
+            const uniqueReferees = [...new Set(refereeData.map(r => r.refereeId))]
+                .map(id => refereeData.find(r => r.refereeId === id))
+                .sort((a, b) => a.refereeName.localeCompare(b.refereeName));
+
+            if (refereeIndex < uniqueReferees.length) {
+                const referee = uniqueReferees[refereeIndex];
+                const weekData = refereeData.find(r => 
+                    r.refereeId === referee.refereeId && r.week === week
+                );
+
+                showTooltip(event, referee, week, weekData);
+            }
+        }
+    }
+
+    function showTooltip(event, referee, week, weekData) {
+        const tooltip = document.getElementById('tooltip');
+        const content = document.getElementById('tooltipContent');
+
+        let html = `
+            <strong>${referee.refereeName}</strong><br>
+            <strong>Hafta:</strong> ${week}<br>
+        `;
+
+        if (weekData) {
+            html += `
+                <strong>Forma:</strong> ${weekData.kitName}<br>
+                <strong>Kullanım:</strong> ${weekData.usageCount} maç
+            `;
+        } else {
+            html += '<em>Bu hafta maç yönetmemiş</em>';
+        }
+
+        content.innerHTML = html;
+        
+        const rect = canvas.getBoundingClientRect();
+        tooltip.style.left = (event.clientX + 10) + 'px';
+        tooltip.style.top = (event.clientY - 10) + 'px';
+        tooltip.style.display = 'block';
+    }
+
+    function hideTooltip() {
+        document.getElementById('tooltip').style.display = 'none';
+    }
+});
+</script> 

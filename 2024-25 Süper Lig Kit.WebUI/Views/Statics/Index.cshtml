@@ -108,6 +108,20 @@
             </div>
         </div>
 
+        <!-- Referee Weekly Heatmap -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card referee-weekly-card">
+                <div class="card-body">
+                    <div class="card-icon">📅</div>
+                    <h5 class="card-title">Hakem Haftalık Harita</h5>
+                    <p class="card-text">Hakemlerin 38 hafta boyunca kullandıkları formaların görselleştirilmesi</p>
+                    <a href="@Url.Action("RefereeWeeklyHeatmap", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-calendar-week"></i> Haftalık
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <!-- Goalkeeper Performance -->
         <div class="col-lg-6 col-xl-4 mb-4">
             <div class="card stat-card goalkeeper-card">
@@ -186,7 +200,7 @@
     <div class="row mt-5">
         <div class="col-12">
             <div class="analysis-panel">
-                <h4>🔍 Gelişmiş Analizler</h4>
+                <h4>Gelişmiş Analizler</h4>
                 <div class="row">
                     <div class="col-md-4">
                         <div class="analysis-item">
@@ -322,6 +336,7 @@
     .goalkeeper-card .card-icon { color: #20c997; }
     .diversity-card .card-icon { color: #6610f2; }
     .critical-card .card-icon { color: #dc3545; }
+    .referee-weekly-card .card-icon { color: #ff6b35; }
     
     .card-title {
         font-weight: bold;

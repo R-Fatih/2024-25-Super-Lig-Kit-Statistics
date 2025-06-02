@@ -87,5 +87,11 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         {
             return View();
         }
+
+        // Hakem Haftalık Forma Kullanım Haritası
+        public IActionResult RefereeWeeklyHeatmap()
+        {
+            return View();
+        }
     }
 } 

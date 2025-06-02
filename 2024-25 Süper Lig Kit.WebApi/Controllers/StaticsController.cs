@@ -818,5 +818,30 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             ).ToListAsync();
             return Ok(teams);
         }
+
+        // === Hakem Haftalık Forma Kullanımı ===
+        [HttpGet("GetRefereeWeeklyKitUsage")]
+        public async Task<IActionResult> GetRefereeWeeklyKitUsage()
+        {
+            var values = _context.Database.SqlQueryRaw<RefereeWeeklyKitModel>(@"
+                SELECT 
+                    R.RefereeId,
+                    R.RefereeName,
+                    R.ImgUrl,
+                    M.Week,
+                    M.MainId,
+                    J.Name as KitName,
+                    J.Path as KitImagePath,
+                    JI.ImgPath as CombinedKitImagePath,
+                    COUNT(*) as UsageCount
+                FROM Matches M
+                INNER JOIN JerseyImages JI ON JI.JerseyImageId = M.RefereeJerseyImageId
+                INNER JOIN Jerseys J ON JI.JerseyId = J.Id
+                INNER JOIN Referees R ON R.RefereeId = M.RefereeId
+                GROUP BY R.RefereeId, R.RefereeName, R.ImgUrl, M.Week,M.MainId, J.Name, J.Path, JI.ImgPath
+                ORDER BY R.RefereeName, M.Week
+            ").ToList();
+            return Ok(values);
+        }
     }
 }
