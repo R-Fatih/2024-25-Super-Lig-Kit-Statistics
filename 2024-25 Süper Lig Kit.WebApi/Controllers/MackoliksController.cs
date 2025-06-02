@@ -39,9 +39,18 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             var date = document.DocumentNode.SelectNodes(list[0]);
             var skor = document.DocumentNode.SelectNodes(list[1]);
 
+        trygoo:
+            try
+            {
+                match.Date = Convert.ToDateTime(date[0].InnerText.Replace("Tarih : ", ""), new CultureInfo("tr"));
 
+            }
+            catch (Exception)
+            {
 
-            match.Date = Convert.ToDateTime(date[0].InnerText.Replace("Tarih : ", ""), new CultureInfo("tr"));
+                goto trygoo;
+            }
+           
             //try
             //{
 

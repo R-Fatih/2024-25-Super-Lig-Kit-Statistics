@@ -1,0 +1,364 @@
+@{
+    ViewData["Title"] = "Takım-Forma-Hakem Network Analizi";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">🕸️ Takım-Forma-Hakem Network Analizi</h2>
+            <div class="text-center mb-3">
+                <button onclick="loadNetworkData()" class="btn btn-primary btn-lg">
+                    <i class="fas fa-project-diagram"></i> Network Yükle
+                </button>
+                <button onclick="downloadCanvas()" class="btn btn-success btn-lg ml-2">
+                    <i class="fas fa-download"></i> İndir
+                </button>
+                <button onclick="animateNetwork()" class="btn btn-warning btn-lg ml-2">
+                    <i class="fas fa-play"></i> Animasyon
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <canvas id="networkCanvas" width="1600" height="1000" style="border: 2px solid #333; background: radial-gradient(circle, #0f0f23 0%, #1a1a2e 100%);"></canvas>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    let networkData = [];
+    let animationId = null;
+    let nodes = [];
+    let connections = [];
+
+    async function loadNetworkData() {
+        try {
+            const response = await fetch('https://localhost:7245/api/Statics/GetNetworkAnalysisData');
+            networkData = await response.json();
+            prepareNetworkVisualization();
+            drawNetworkDiagram();
+        } catch (error) {
+            console.error('Error loading network data:', error);
+            alert('Veri yüklenirken hata oluştu!');
+        }
+    }
+
+    function prepareNetworkVisualization() {
+        nodes = [];
+        connections = [];
+        
+        const canvas = document.getElementById('networkCanvas');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // Create nodes for teams, kits, and referees
+        const teams = [...new Set(networkData.map(d => d.teamName))];
+        const kits = [...new Set(networkData.map(d => d.kitName))];
+        const referees = [...new Set(networkData.map(d => d.refereeName))];
+        
+        // Position teams in a circle
+        teams.forEach((team, index) => {
+            const angle = (index / teams.length) * 2 * Math.PI;
+            const radius = 200;
+            nodes.push({
+                id: `team_${team}`,
+                label: team,
+                type: 'team',
+                x: centerX + Math.cos(angle) * radius,
+                y: centerY + Math.sin(angle) * radius,
+                size: 15,
+                color: '#ff6b6b',
+                connections: 0
+            });
+        });
+        
+        // Position kits in inner circle
+        kits.forEach((kit, index) => {
+            const angle = (index / kits.length) * 2 * Math.PI;
+            const radius = 120;
+            nodes.push({
+                id: `kit_${kit}`,
+                label: kit.substring(0, 8),
+                type: 'kit',
+                x: centerX + Math.cos(angle) * radius,
+                y: centerY + Math.sin(angle) * radius,
+                size: 10,
+                color: '#4ecdc4',
+                connections: 0
+            });
+        });
+        
+        // Position referees in outer circle
+        referees.forEach((referee, index) => {
+            const angle = (index / referees.length) * 2 * Math.PI;
+            const radius = 300;
+            nodes.push({
+                id: `referee_${referee}`,
+                label: referee.substring(0, 10),
+                type: 'referee',
+                x: centerX + Math.cos(angle) * radius,
+                y: centerY + Math.sin(angle) * radius,
+                size: 8,
+                color: '#feca57',
+                connections: 0
+            });
+        });
+        
+        // Create connections
+        networkData.forEach(connection => {
+            const teamNode = nodes.find(n => n.id === `team_${connection.teamName}`);
+            const kitNode = nodes.find(n => n.id === `kit_${connection.kitName}`);
+            const refereeNode = nodes.find(n => n.id === `referee_${connection.refereeName}`);
+            
+            if (teamNode && kitNode && refereeNode) {
+                // Team to Kit connection
+                connections.push({
+                    from: teamNode,
+                    to: kitNode,
+                    strength: connection.connectionStrength,
+                    color: `rgba(255, 107, 107, ${Math.min(connection.connectionStrength / 10, 1)})`
+                });
+                
+                // Kit to Referee connection
+                connections.push({
+                    from: kitNode,
+                    to: refereeNode,
+                    strength: connection.connectionStrength,
+                    color: `rgba(254, 202, 87, ${Math.min(connection.connectionStrength / 10, 1)})`
+                });
+                
+                teamNode.connections += connection.connectionStrength;
+                kitNode.connections += connection.connectionStrength;
+                refereeNode.connections += connection.connectionStrength;
+            }
+        });
+        
+        // Update node sizes based on connections
+        nodes.forEach(node => {
+            node.size = Math.max(5, Math.min(25, 8 + node.connections / 5));
+        });
+    }
+
+    function drawNetworkDiagram() {
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Title
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("🕸️ TAKIM-FORMA-HAKEM NETWORK ANALİZİ", canvas.width / 2, 40);
+        
+        // Draw connections
+        connections.forEach(connection => {
+            ctx.beginPath();
+            ctx.strokeStyle = connection.color;
+            ctx.lineWidth = Math.max(1, connection.strength / 5);
+            ctx.moveTo(connection.from.x, connection.from.y);
+            ctx.lineTo(connection.to.x, connection.to.y);
+            ctx.stroke();
+        });
+        
+        // Draw nodes
+        nodes.forEach(node => {
+            // Node circle
+            ctx.beginPath();
+            ctx.fillStyle = node.color;
+            ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Node border
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Node label
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `${Math.max(8, node.size - 2)}px Arial`;
+            ctx.textAlign = "center";
+            ctx.fillText(node.label, node.x, node.y - node.size - 5);
+            
+            // Connection count
+            if (node.connections > 5) {
+                ctx.fillStyle = '#ffff00';
+                ctx.font = "8px Arial";
+                ctx.fillText(node.connections.toString(), node.x, node.y + 3);
+            }
+        });
+        
+        // Draw legend
+        drawNetworkLegend(ctx, 50, 100);
+        
+        // Draw statistics
+        drawNetworkStats(ctx, 50, canvas.height - 200);
+    }
+    
+    function drawNetworkLegend(ctx, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillRect(x, y, 300, 200);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 300, 200);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("🕸️ NETWORK LEGEND", x + 10, y + 25);
+        
+        // Node types
+        ctx.font = "12px Arial";
+        ctx.fillText("Node Türleri:", x + 10, y + 50);
+        
+        // Team nodes
+        ctx.beginPath();
+        ctx.fillStyle = '#ff6b6b';
+        ctx.arc(x + 20, y + 65, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("Takımlar", x + 35, y + 70);
+        
+        // Kit nodes
+        ctx.beginPath();
+        ctx.fillStyle = '#4ecdc4';
+        ctx.arc(x + 20, y + 85, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("Formalar", x + 35, y + 90);
+        
+        // Referee nodes
+        ctx.beginPath();
+        ctx.fillStyle = '#feca57';
+        ctx.arc(x + 20, y + 105, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("Hakemler", x + 35, y + 110);
+        
+        // Connection strength
+        ctx.font = "12px Arial";
+        ctx.fillText("Bağlantı Gücü:", x + 10, y + 135);
+        
+        ctx.strokeStyle = 'rgba(255, 107, 107, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + 145);
+        ctx.lineTo(x + 50, y + 145);
+        ctx.stroke();
+        ctx.fillText("Zayıf", x + 55, y + 150);
+        
+        ctx.strokeStyle = 'rgba(255, 107, 107, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + 160);
+        ctx.lineTo(x + 50, y + 160);
+        ctx.stroke();
+        ctx.fillText("Güçlü", x + 55, y + 165);
+        
+        ctx.fillStyle = '#cccccc';
+        ctx.font = "10px Arial";
+        ctx.fillText("Node boyutu = Bağlantı sayısı", x + 10, y + 185);
+    }
+    
+    function drawNetworkStats(ctx, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillRect(x, y, 800, 150);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 800, 150);
+        
+        const totalConnections = connections.length;
+        const avgStrength = connections.reduce((sum, conn) => sum + conn.strength, 0) / totalConnections;
+        const strongestConnection = connections.reduce((max, conn) => conn.strength > max.strength ? conn : max);
+        const mostConnectedNode = nodes.reduce((max, node) => node.connections > max.connections ? node : max);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📊 NETWORK İSTATİSTİKLERİ", x + 10, y + 25);
+        
+        ctx.font = "12px Arial";
+        ctx.fillText(`Toplam Bağlantı: ${totalConnections}`, x + 10, y + 50);
+        ctx.fillText(`Ortalama Güç: ${avgStrength.toFixed(1)}`, x + 250, y + 50);
+        ctx.fillText(`Toplam Node: ${nodes.length}`, x + 400, y + 50);
+        
+        ctx.fillText(`En Güçlü Bağlantı: ${strongestConnection.strength}`, x + 10, y + 75);
+        ctx.fillText(`En Bağlantılı Node: ${mostConnectedNode.label} (${mostConnectedNode.connections})`, x + 250, y + 75);
+        
+        // Network density
+        const maxPossibleConnections = nodes.length * (nodes.length - 1) / 2;
+        const density = (totalConnections / maxPossibleConnections * 100).toFixed(1);
+        ctx.fillText(`Network Yoğunluğu: %${density}`, x + 10, y + 100);
+        
+        // Node type counts
+        const teamCount = nodes.filter(n => n.type === 'team').length;
+        const kitCount = nodes.filter(n => n.type === 'kit').length;
+        const refereeCount = nodes.filter(n => n.type === 'referee').length;
+        
+        ctx.fillText(`Takım: ${teamCount} | Forma: ${kitCount} | Hakem: ${refereeCount}`, x + 10, y + 125);
+    }
+    
+    function animateNetwork() {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+            return;
+        }
+        
+        let frame = 0;
+        
+        function animate() {
+            // Slightly move nodes for animation effect
+            nodes.forEach(node => {
+                node.x += Math.sin(frame * 0.01 + node.x * 0.001) * 0.5;
+                node.y += Math.cos(frame * 0.01 + node.y * 0.001) * 0.5;
+            });
+            
+            drawNetworkDiagram();
+            frame++;
+            
+            if (frame < 1000) { // Animate for limited time
+                animationId = requestAnimationFrame(animate);
+            } else {
+                animationId = null;
+            }
+        }
+        
+        animate();
+    }
+    
+    function downloadCanvas() {
+        const canvas = document.getElementById('networkCanvas');
+        const link = document.createElement('a');
+        link.download = 'network-analizi.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Auto load data when page loads
+    window.onload = function() {
+        setTimeout(loadNetworkData, 500);
+    };
+</script>
+
+<style>
+    #networkCanvas {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .container-fluid {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    h2 {
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+</style> 

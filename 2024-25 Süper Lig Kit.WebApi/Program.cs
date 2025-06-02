@@ -1,9 +1,11 @@
-using _2024_25_Süper_Lig_Kit.WebApi.Context;
+using _2024_25_SÃ¼per_Lig_Kit.WebApi.Context;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
 builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(policy =>
@@ -26,7 +28,8 @@ builder.Services.Configure<KestrelServerOptions>(options =>
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    options.JsonSerializerOptions.MaxDepth = 64; // Maksimum derinliði artýrýn
+    options.JsonSerializerOptions.MaxDepth = 64; // Maksimum derinliÄŸi artÄ±rÄ±n
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 }); ;
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -36,11 +39,10 @@ builder.Services.AddDbContext<AppDbContext>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 app.UseHttpsRedirection();
 app.UseCors();

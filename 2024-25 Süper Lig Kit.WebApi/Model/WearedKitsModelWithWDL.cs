@@ -10,5 +10,6 @@
 		public int Loses { get; set; }
 		public decimal WinPercantage { get; set; }
 		public decimal LosePercantage { get; set; }
+		public string Path { get; set; }
 	}
 }

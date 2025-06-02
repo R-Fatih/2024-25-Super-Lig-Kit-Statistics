@@ -1,0 +1,364 @@
+@{
+    ViewData["Title"] = "Haftalık Forma Trendleri";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">📈 Haftalık Forma Trend Analizi</h2>
+            <div class="text-center mb-3">
+                <button onclick="loadWeeklyTrendData()" class="btn btn-primary btn-lg">
+                    <i class="fas fa-chart-line"></i> Trend Yükle
+                </button>
+                <button onclick="downloadCanvas()" class="btn btn-success btn-lg ml-2">
+                    <i class="fas fa-download"></i> İndir
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <canvas id="weeklyTrendCanvas" width="1600" height="900" style="border: 2px solid #333; background: linear-gradient(135deg, #2C3E50 0%, #4A6741 100%);"></canvas>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    async function loadWeeklyTrendData() {
+        try {
+            const [weeklyResponse, diversityResponse] = await Promise.all([
+                fetch('https://localhost:7245/api/Statics/GetWeeklyKitDistribution'),
+                fetch('https://localhost:7245/api/Statics/GetKitDiversityTimeSeries')
+            ]);
+            
+            const weeklyData = await weeklyResponse.json();
+            const diversityData = await diversityResponse.json();
+            
+            drawWeeklyTrendChart(weeklyData, diversityData);
+        } catch (error) {
+            console.error('Error loading weekly trend data:', error);
+            alert('Veri yüklenirken hata oluştu!');
+        }
+    }
+
+    function drawWeeklyTrendChart(weeklyData, diversityData) {
+        const canvas = document.getElementById('weeklyTrendCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Title
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("📈 HAFTALİK FORMA TREND ANALİZİ", canvas.width / 2, 40);
+        
+        // Chart area
+        const chartX = 100;
+        const chartY = 80;
+        const chartWidth = canvas.width - 200;
+        const chartHeight = 300;
+        
+        // Draw diversity trend line
+        drawDiversityTrend(ctx, diversityData, chartX, chartY, chartWidth, chartHeight);
+        
+        // Team usage chart
+        const teamChartY = chartY + chartHeight + 100;
+        drawTeamUsageChart(ctx, weeklyData, chartX, teamChartY, chartWidth, chartHeight);
+        
+        // Draw legend
+        drawWeeklyTrendLegend(ctx, canvas.width - 300, 100);
+        
+        // Draw statistics
+        drawWeeklyStats(ctx, weeklyData, diversityData, 50, canvas.height - 150);
+    }
+    
+    function drawDiversityTrend(ctx, data, x, y, width, height) {
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        // Title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📊 Haftalık Forma Çeşitliliği Trendi", x + 10, y + 25);
+        
+        if (data.length === 0) return;
+        
+        // Sort by week
+        data.sort((a, b) => a.week - b.week);
+        
+        const maxWeek = Math.max(...data.map(d => d.week));
+        const maxDiversity = Math.max(...data.map(d => d.kitDiversityIndex));
+        const maxTotal = Math.max(...data.map(d => d.totalKitsUsed));
+        
+        // Draw grid
+        ctx.strokeStyle = '#444444';
+        ctx.lineWidth = 1;
+        
+        for (let i = 0; i <= 10; i++) {
+            const gridY = y + 50 + (i * (height - 100) / 10);
+            ctx.beginPath();
+            ctx.moveTo(x + 50, gridY);
+            ctx.lineTo(x + width - 20, gridY);
+            ctx.stroke();
+        }
+        
+        for (let i = 0; i <= 37; i += 5) {
+            const gridX = x + 50 + (i * (width - 70) / 37);
+            ctx.beginPath();
+            ctx.moveTo(gridX, y + 50);
+            ctx.lineTo(gridX, y + height - 50);
+            ctx.stroke();
+        }
+        
+        // Draw diversity index line
+        ctx.beginPath();
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        
+        for (let i = 0; i < data.length; i++) {
+            const pointX = x + 50 + (data[i].week * (width - 70) / 37);
+            const pointY = y + height - 50 - (data[i].kitDiversityIndex * (height - 100) / maxDiversity);
+            
+            if (i === 0) {
+                ctx.moveTo(pointX, pointY);
+            } else {
+                ctx.lineTo(pointX, pointY);
+            }
+            
+            // Draw point
+            ctx.fillStyle = '#00ff88';
+            ctx.fillRect(pointX - 3, pointY - 3, 6, 6);
+        }
+        ctx.stroke();
+        
+        // Draw total kits line
+        ctx.beginPath();
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 2;
+        
+        for (let i = 0; i < data.length; i++) {
+            const pointX = x + 50 + (data[i].week * (width - 70) / 37);
+            const pointY = y + height - 50 - (data[i].totalKitsUsed * (height - 100) / maxTotal);
+            
+            if (i === 0) {
+                ctx.moveTo(pointX, pointY);
+            } else {
+                ctx.lineTo(pointX, pointY);
+            }
+        }
+        ctx.stroke();
+        
+        // Draw axes labels
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        
+        for (let i = 0; i <= 37; i += 5) {
+            const labelX = x + 50 + (i * (width - 70) / 37);
+            ctx.fillText(i.toString(), labelX, y + height - 30);
+        }
+        
+        ctx.save();
+        ctx.translate(x + 20, y + height/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText("Çeşitlilik İndeksi", 0, 0);
+        ctx.restore();
+        
+        ctx.fillText("Hafta", x + width/2, y + height - 10);
+    }
+    
+    function drawTeamUsageChart(ctx, data, x, y, width, height) {
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        // Title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("🏆 Takım Bazlı Haftalık Forma Kullanımı", x + 10, y + 25);
+        
+        // Group data by team and get top teams
+        const teamUsage = {};
+        data.forEach(item => {
+            if (!teamUsage[item.teamName]) {
+                teamUsage[item.teamName] = 0;
+            }
+            teamUsage[item.teamName] += item.kitUsageCount;
+        });
+        
+        const topTeams = Object.entries(teamUsage)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 8)
+            .map(([team]) => team);
+        
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'];
+        
+        // Draw team usage lines
+        topTeams.forEach((team, index) => {
+            const teamData = data.filter(d => d.teamName === team);
+            const weeklyUsage = {};
+            
+            teamData.forEach(item => {
+                if (!weeklyUsage[item.week]) {
+                    weeklyUsage[item.week] = 0;
+                }
+                weeklyUsage[item.week] += item.kitUsageCount;
+            });
+            
+            const maxUsage = Math.max(...Object.values(weeklyUsage));
+            
+            ctx.beginPath();
+            ctx.strokeStyle = colors[index];
+            ctx.lineWidth = 2;
+            
+            let firstPoint = true;
+            for (let week = 1; week <= 37; week++) {
+                const usage = weeklyUsage[week] || 0;
+                const pointX = x + 50 + (week * (width - 70) / 37);
+                const pointY = y + height - 50 - (usage * (height - 100) / 10); // Normalize to 10 max usage
+                
+                if (firstPoint) {
+                    ctx.moveTo(pointX, pointY);
+                    firstPoint = false;
+                } else {
+                    ctx.lineTo(pointX, pointY);
+                }
+            }
+            ctx.stroke();
+            
+            // Team name
+            ctx.fillStyle = colors[index];
+            ctx.font = "10px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(team, x + width - 150, y + 50 + (index * 15));
+        });
+        
+        // Axes
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Hafta", x + width/2, y + height - 10);
+        
+        ctx.save();
+        ctx.translate(x + 20, y + height/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText("Kullanım Sayısı", 0, 0);
+        ctx.restore();
+    }
+    
+    function drawWeeklyTrendLegend(ctx, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillRect(x, y, 250, 180);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 250, 180);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📊 LEGEND", x + 10, y + 25);
+        
+        // Diversity line
+        ctx.strokeStyle = '#00ff88';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + 45);
+        ctx.lineTo(x + 40, y + 45);
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "12px Arial";
+        ctx.fillText("Çeşitlilik İndeksi", x + 50, y + 50);
+        
+        // Total kits line
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x + 10, y + 65);
+        ctx.lineTo(x + 40, y + 65);
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("Toplam Forma Sayısı", x + 50, y + 70);
+        
+        // Team colors
+        ctx.font = "11px Arial";
+        ctx.fillText("Takım Renkleri:", x + 10, y + 95);
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
+        colors.forEach((color, i) => {
+            ctx.fillStyle = color;
+            ctx.fillRect(x + 10, y + 105 + (i * 15), 15, 10);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`Takım ${i + 1}`, x + 35, y + 114 + (i * 15));
+        });
+    }
+    
+    function drawWeeklyStats(ctx, weeklyData, diversityData, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillRect(x, y, 800, 120);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 800, 120);
+        
+        const totalUsage = weeklyData.reduce((sum, item) => sum + item.kitUsageCount, 0);
+        const avgDiversity = diversityData.reduce((sum, item) => sum + item.kitDiversityIndex, 0) / diversityData.length;
+        const maxDiversityWeek = diversityData.reduce((max, item) => item.kitDiversityIndex > max.kitDiversityIndex ? item : max);
+        const minDiversityWeek = diversityData.reduce((min, item) => item.kitDiversityIndex < min.kitDiversityIndex ? item : min);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📈 TREND İSTATİSTİKLERİ", x + 10, y + 25);
+        
+        ctx.font = "12px Arial";
+        ctx.fillText(`Toplam Forma Kullanımı: ${totalUsage}`, x + 10, y + 50);
+        ctx.fillText(`Ortalama Çeşitlilik: ${avgDiversity.toFixed(2)}`, x + 300, y + 50);
+        ctx.fillText(`En Çeşitli Hafta: ${maxDiversityWeek.week} (${maxDiversityWeek.kitDiversityIndex.toFixed(2)})`, x + 10, y + 75);
+        ctx.fillText(`En Az Çeşitli Hafta: ${minDiversityWeek.week} (${minDiversityWeek.kitDiversityIndex.toFixed(2)})`, x + 300, y + 75);
+        
+        const weekCount = new Set(weeklyData.map(d => d.week)).size;
+        ctx.fillText(`Analiz Edilen Hafta: ${weekCount}`, x + 10, y + 100);
+    }
+    
+    function downloadCanvas() {
+        const canvas = document.getElementById('weeklyTrendCanvas');
+        const link = document.createElement('a');
+        link.download = 'haftalik-forma-trend.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Auto load data when page loads
+    window.onload = function() {
+        setTimeout(loadWeeklyTrendData, 500);
+    };
+</script>
+
+<style>
+    #weeklyTrendCanvas {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .container-fluid {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    h2 {
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+</style> 

@@ -2,7 +2,7 @@
     ViewData["Title"] = "TeamsDownByDown";
 }
 <button onclick="abc()">btn</button>
-<canvas width="8000" height="12000" id="myCanvas"></canvas>
+<canvas style="background-color:red" width="8000" height="12000" id="myCanvas"></canvas>
 <script type="text/javascript">
     async function abc() {
         $.ajax({
@@ -36,7 +36,7 @@
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
 
-        for (var week = 0; week < 11; week++) {
+        for (var week = 0; week < 38; week++) {
             ctx.fillText("Hafta " + (week + 1), x + 350, 30);
             x += 200;
         }

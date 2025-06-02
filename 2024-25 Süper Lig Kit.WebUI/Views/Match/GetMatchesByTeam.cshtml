@@ -1,15 +1,15 @@
 ﻿@using _2024_25_Süper_Lig_Kit.Dto.MatchDtos
 @model List<ResultMatchDto>
 @{
-    ViewData["Title"] = "Index";
+	ViewData["Title"] = "Index";
 }
 
-<table class="table table-striped table-wrap">
+@* <table class="table table-striped table-wrap">
     <thead>
         <tr>
             @for (int i = 0; i < 36; i++)
             {
-             
+
             <th>@i</th>
 
             }
@@ -18,7 +18,7 @@
         </tr>
     </thead>
     <tbody>
-        
+
             <tr>
 
             @foreach (var item in Model)
@@ -33,13 +33,269 @@
                     else
                     {
                         <img width="50" height="50" src="@item.AwayTeamJerseyImage.ImgPath" />
-					
+
                     }
                 </td>
                 }
             </tr>
-        
+
     </tbody>
-</table>
+</table> *@
+<button onclick="abc()">btn</button>
+<button onclick="down()">down</button>
+
+<canvas style="background-color:red" width="4000" height="1500" id="myCanvas"></canvas>
+<canvas style="background-color:red" width="4000" height="1500" id="myCanvas2"></canvas>
+
+<script type="text/javascript">
+	function down(){
+		const link = document.createElement('a');
+	const imgData = document.getElementById('myCanvas').toDataURL();
+	console.log(imgData);
+	link.href = imgData;
+	link.download = 'canvas.png';
+	link.click();
+	}
+	async function abc() {
+			const urlParams = new URLSearchParams(window.location.search);
+	const id = urlParams.get('id');
+		$.ajax({
+			url: '@Url.Action("GetMatchesByTeamJson", "Match")',
+			type: "GET",
+			data: {id:id},
+			success: function (data) {
+				drawTeams(data,'myCanvas','player');
+				drawTeams(data,'myCanvas2','gk');
+			}
+		});
+	}
+
+	function loadImage(src) {
+		return new Promise((resolve, reject) => {
+			const img = new Image();
+			img.onload = () => resolve(img);
+			img.onerror = reject;
+			img.src = src;
+		});
+	}
+
+	function drawSeperator(ctx,x,canvas){
+		let separatorX = x + 150;
+					ctx.beginPath();
+					ctx.strokeStyle = '#fff';
+					ctx.lineWidth = 2;
+					ctx.moveTo(separatorX, 0);
+					ctx.lineTo(separatorX, canvas.height);
+					ctx.stroke();
+	}
+
+	async function drawTeams(teams,canvasId,sep) {
+		const canvas = document.getElementById(canvasId);
+		const ctx = canvas.getContext('2d');
+		let x = 0;
+		let y = 0;
+
+		ctx.font = "bold 24px Arial";
+		ctx.fillStyle = "white";
+		ctx.textAlign = "center";
+
+		for (var week = 0; week < 38/2; week++) {
+			ctx.fillText( (week + 1), x + 250, 30);
+			x += 200;
+		}
+		x = 0;
+		y =+ 50;
+		ctx.beginPath();
+		ctx.strokeStyle = '#fff';
+		ctx.lineWidth = 2;
+		ctx.moveTo(0, y );
+		ctx.lineTo(canvas.width, y );
+		ctx.stroke();
+
+		const urlParams = new URLSearchParams(window.location.search);
+			const id = urlParams.get('id');
+							let matchCount=1;
+
+		for (let i = 0; i < teams.length/2; i++) {
+
+			try {
+				// Load and draw jerseys
+
+					const homeTeamId = teams[i].homeTeamId;
+					const awayTeamId = teams[i].awayTeamId;
+					let homeJersey=teams[i].homeTeamJerseyImage;
+					let awayJersey=teams[i].awayTeamJerseyImage;
+
+					if(sep=='gk')
+					{
+						homeJersey=teams[i].homeTeamJerseyImageGK;
+						awayJersey=teams[i].awayTeamJerseyImageGK;
+					}
+					console.log(matchCount);
+					console.log(teams[i].week);
+					if(matchCount!=teams[i].week){
+						x += 200;
+					matchCount=matchCount+1;
+										drawSeperator(ctx,x,canvas);
+
+					}
+						if(homeTeamId==id){
+						const jerseySource = homeJersey ? homeJersey.imgPath : '/kits/blank.png';
+
+					  const jerseyImg = await loadImage(jerseySource);
+					  const jerseyImg2 = await loadImage('https://cdn-icons-png.flaticon.com/512/25/25694.png');
+
+					  ctx.drawImage(jerseyImg, x, y, 500, 500);
+					  ctx.drawImage(jerseyImg2, x+160, y+480, 30, 30);
+					  // beyaza boyar
+							ctx.globalCompositeOperation = "source-atop";
+							ctx.fillStyle = "white";
+							ctx.fillRect(x+160, y+480, 30, 30);
+							ctx.globalCompositeOperation = "source-over";
+										  x += 200;
+
+						}else{
+						const jerseySource = awayJersey ? awayJersey.imgPath : '/kits/blank.png';
+					  const jerseyImg = await loadImage(jerseySource);
+					const jerseyImg2 = await loadImage('https://static-00.iconduck.com/assets.00/flight-icon-511x512-dhaf9l9x.png');
+
+					  ctx.drawImage(jerseyImg, x, y, 500, 500);
+					   ctx.drawImage(jerseyImg2, x+160, y+480, 30, 30);
+					  // beyaza boyar
+							ctx.globalCompositeOperation = "source-atop";
+							ctx.fillStyle = "white";
+							ctx.fillRect(x+160, y+480, 30, 30);
+							ctx.globalCompositeOperation = "source-over";
+										  x += 200;
+
+						}
+					matchCount=matchCount+1;
+
+					// Determine jersey image source
+
+
+
+					// Draw vertical separator
+					drawSeperator(ctx,x,canvas);
+
+
+				// Draw horizontal separator
+				ctx.beginPath();
+				ctx.strokeStyle = '#fff';
+				ctx.lineWidth = 2;
+				ctx.moveTo(0, y + 525);
+				ctx.lineTo(canvas.width, y + 525);
+				ctx.stroke();
+
+
+
+
+				// Reset x and increment y for next row
+				//y += 550;
+			   // x = 0;
+			} catch (error) {
+				console.error('Error loading images:', error);
+			}
+		}
+
+		y += 550;
+		x=0;
+		for (var week = 19; week < 38; week++) {
+			ctx.fillText( (week + 1), x + 250, y+10);
+			x += 200;
+		}
+		x = 0;
+		//y =+ 50;
+		y+=30;
+		ctx.beginPath();
+		ctx.strokeStyle = '#fff';
+		ctx.lineWidth = 2;
+		ctx.moveTo(0, y );
+		ctx.lineTo(canvas.width, y );
+		ctx.stroke();
+		for (let i = teams.length/2; i < teams.length; i++) {
+
+			try {
+				// Load and draw jerseys
+
+					const homeTeamId = teams[i].homeTeamId;
+					const awayTeamId = teams[i].awayTeamId;
+					let homeJersey=teams[i].homeTeamJerseyImage;
+					let awayJersey=teams[i].awayTeamJerseyImage;
+					console.log(matchCount);
+					console.log(teams[i].week);
+
+					if(sep=='gk')
+					{
+						homeJersey=teams[i].homeTeamJerseyImageGK;
+						awayJersey=teams[i].awayTeamJerseyImageGK;
+					}
+					if(matchCount!=teams[i].week){
+						x += 200;
+					matchCount=matchCount+1;
+										drawSeperator(ctx,x,canvas);
+
+					}
+						if(homeTeamId==id){
+						const jerseySource = homeJersey ? homeJersey.imgPath : '/kits/blank.png';
+
+					  const jerseyImg = await loadImage(jerseySource);
+					  const jerseyImg2 = await loadImage('https://cdn-icons-png.flaticon.com/512/25/25694.png');
+
+					  ctx.drawImage(jerseyImg, x, y, 500, 500);
+					  ctx.drawImage(jerseyImg2, x+160, y+480, 30, 30);
+					  // beyaza boyar
+							ctx.globalCompositeOperation = "source-atop";
+							ctx.fillStyle = "white";
+							ctx.fillRect(x+160, y+480, 30, 30);
+							ctx.globalCompositeOperation = "source-over";
+										  x += 200;
+
+						}else{
+						const jerseySource = awayJersey ? awayJersey.imgPath : '/kits/blank.png';
+					  const jerseyImg = await loadImage(jerseySource);
+					const jerseyImg2 = await loadImage('https://static-00.iconduck.com/assets.00/flight-icon-511x512-dhaf9l9x.png');
+
+					  ctx.drawImage(jerseyImg, x, y, 500, 500);
+					   ctx.drawImage(jerseyImg2, x+160, y+480, 30, 30);
+					  // beyaza boyar
+							ctx.globalCompositeOperation = "source-atop";
+							ctx.fillStyle = "white";
+							ctx.fillRect(x+160, y+480, 30, 30);
+							ctx.globalCompositeOperation = "source-over";
+										  x += 200;
+
+						}
+					matchCount=matchCount+1;
+
+					// Determine jersey image source
+
+
+
+					// Draw vertical separator
+					drawSeperator(ctx,x,canvas);
+
+
+				// Draw horizontal separator
+				ctx.beginPath();
+				ctx.strokeStyle = '#fff';
+				ctx.lineWidth = 2;
+				ctx.moveTo(0, y + 525);
+				ctx.lineTo(canvas.width, y + 525);
+				ctx.stroke();
+
+
+
+
+				// Reset x and increment y for next row
+				//y += 550;
+			   // x = 0;
+			} catch (error) {
+				console.error('Error loading images:', error);
+			}
+		}
+	}
+</script>
+
 <a href="/Match/Create" class="btn btn-success">Create New Match</a>
 

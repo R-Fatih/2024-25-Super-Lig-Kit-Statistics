@@ -7,5 +7,6 @@
 		public string Body { get; set; }
 		public int KitCount { get; set; }
 		public int MatchCount { get; set; }
+		public string Path { get; set; }
 	}
 }

@@ -14,8 +14,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var client= _client.CreateClient();
-            var response=await client.GetFromJsonAsync<List<ResultRefereeDto>>("https://localhost:7245/api/Referees");
+            var client= _client.CreateClient("Default");
+            var response=await client.GetFromJsonAsync<List<ResultRefereeDto>>("/api/Referees");
 
             return View(response);
         }
@@ -28,8 +28,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         public async Task<IActionResult> Create(CreateRefereeDto referee)
         {
             
-                var client= _client.CreateClient();
-                var response=await client.PostAsJsonAsync("https://localhost:7245/api/Referees",referee);
+                var client= _client.CreateClient("Default");
+                var response=await client.PostAsJsonAsync("/api/Referees",referee);
 
                 // Takım oluşturma işlemi
                 return RedirectToAction("Index");

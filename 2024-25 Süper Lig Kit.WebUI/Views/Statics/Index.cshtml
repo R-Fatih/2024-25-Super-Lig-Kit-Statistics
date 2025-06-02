@@ -1,0 +1,417 @@
+@{
+    ViewData["Title"] = "Forma İstatistikleri Dashboard";
+}
+
+<div class="container-fluid dashboard">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-5">⚽ SÜPER LİG FORMA ANALİTİK DASHBOARD</h1>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Kit Success Analysis -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card success-card">
+                <div class="card-body">
+                    <div class="card-icon">🏆</div>
+                    <h5 class="card-title">Forma-Başarı Korelasyonu</h5>
+                    <p class="card-text">Forma kombinasyonları ile maç sonuçları arasındaki ilişki analizi</p>
+                    <a href="@Url.Action("KitSuccessCorrelation", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> Analiz Et
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Home Advantage -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card advantage-card">
+                <div class="card-body">
+                    <div class="card-icon">🏠</div>
+                    <h5 class="card-title">İç Saha Avantajı & Forma</h5>
+                    <p class="card-text">Farklı forma seçimlerinin ev sahibi avantajına etkisi</p>
+                    <a href="@Url.Action("HomeAdvantageByKit", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-home"></i> Analiz Et
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Heatmap -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card heatmap-card">
+                <div class="card-body">
+                    <div class="card-icon">🔥</div>
+                    <h5 class="card-title">Forma Kullanım Heatmap</h5>
+                    <p class="card-text">Takım vs Forma ID matrisi görselleştirmesi</p>
+                    <a href="@Url.Action("KitUsageHeatmap", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-fire"></i> Heatmap
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goalkeeper Heatmap -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card goalkeeper-heatmap-card">
+                <div class="card-body">
+                    <div class="card-icon">🥅</div>
+                    <h5 class="card-title">Kaleci Forma Heatmap</h5>
+                    <p class="card-text">Kaleci formaları kullanım yoğunluğu matrisi</p>
+                    <a href="@Url.Action("GoalkeeperKitUsageHeatmap", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-shield-alt"></i> Kaleci Heatmap
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Weekly Trends -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card trend-card">
+                <div class="card-body">
+                    <div class="card-icon">📈</div>
+                    <h5 class="card-title">Haftalık Forma Trendleri</h5>
+                    <p class="card-text">37 hafta boyunca forma tercihlerinin değişimi analizi</p>
+                    <a href="@Url.Action("WeeklyKitTrends", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-chart-line"></i> Trendler
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Network Analysis -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card network-card">
+                <div class="card-body">
+                    <div class="card-icon">🕸️</div>
+                    <h5 class="card-title">Network Analizi</h5>
+                    <p class="card-text">Takım-Forma-Hakem ilişki ağı görselleştirmesi</p>
+                    <a href="@Url.Action("NetworkAnalysis", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-project-diagram"></i> Network
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Referee Analysis -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card referee-card">
+                <div class="card-body">
+                    <div class="card-icon">👨‍⚖️</div>
+                    <h5 class="card-title">Hakem Forma Analizi</h5>
+                    <p class="card-text">Hakem forma tercihleri ve takım uyumu analizi</p>
+                    <a href="@Url.Action("RefereeAnalysis", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-whistle"></i> Hakem
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goalkeeper Performance -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card goalkeeper-card">
+                <div class="card-body">
+                    <div class="card-icon">🥅</div>
+                    <h5 class="card-title">Kaleci Forma Performansı</h5>
+                    <p class="card-text">Kaleci formalarının temiz sayfa oranları ve performans analizi</p>
+                    <a href="@Url.Action("GoalkeeperKitPerformance", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-shield-alt"></i> Kaleci
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Kit Diversity -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card diversity-card">
+                <div class="card-body">
+                    <div class="card-icon">🔄</div>
+                    <h5 class="card-title">Takım Forma Çeşitliliği</h5>
+                    <p class="card-text">En çok forma değiştiren takımlar ve çeşitlilik analizi</p>
+                    <a href="@Url.Action("TeamKitDiversity", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-random"></i> Çeşitlilik
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Critical Match Analysis -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card critical-card">
+                <div class="card-body">
+                    <div class="card-icon">🎯</div>
+                    <h5 class="card-title">Kritik Maç Analizi</h5>
+                    <p class="card-text">Yüksek skorlu maçlarda forma tercihleri analizi</p>
+                    <a href="@Url.Action("CriticalMatchAnalysis", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-bullseye"></i> Kritik
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats Row -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="text-center mb-4">📊 Hızlı İstatistikler</h3>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="quick-stat-card">
+                <div class="stat-number" id="totalMatches">-</div>
+                <div class="stat-label">Toplam Maç</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="quick-stat-card">
+                <div class="stat-number" id="totalKits">-</div>
+                <div class="stat-label">Farklı Forma</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="quick-stat-card">
+                <div class="stat-number" id="totalTeams">-</div>
+                <div class="stat-label">Takım Sayısı</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="quick-stat-card">
+                <div class="stat-number" id="totalReferees">-</div>
+                <div class="stat-label">Hakem Sayısı</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analysis Options -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="analysis-panel">
+                <h4>🔍 Gelişmiş Analizler</h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="analysis-item">
+                            <h6>📅 Sezonsal Analiz</h6>
+                            <p>Sezon başı, orta ve sonu forma tercihleri</p>
+                            <a href="@Url.Action("SeasonEndAnalysis", "Statics")" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-calendar"></i> Sezon Analizi
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="analysis-item">
+                            <h6>📊 Skor Dağılımı</h6>
+                            <p>Farklı formalarda skor dağılım analizi</p>
+                            <a href="@Url.Action("ScoreDistributionByKit", "Statics")" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-chart-pie"></i> Skor Analizi
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="analysis-item">
+                            <h6>⏱️ Zaman Serisi</h6>
+                            <p>Forma çeşitliliğinin zaman içindeki değişimi</p>
+                            <a href="@Url.Action("TimeSeriesAnalysis", "Statics")" class="btn btn-outline-light btn-sm">
+                                <i class="fas fa-clock"></i> Zaman Analizi
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Load quick statistics on page load
+    window.onload = function() {
+        loadQuickStats();
+    };
+    
+    async function loadQuickStats() {
+        try {
+            // Load sample data to get quick stats
+            const [heatmapResponse, networkResponse] = await Promise.all([
+                fetch('https://localhost:7245/api/Statics/GetKitUsageHeatmapData'),
+                fetch('https://localhost:7245/api/Statics/GetNetworkAnalysisData')
+            ]);
+            
+            const heatmapData = await heatmapResponse.json();
+            const networkData = await networkResponse.json();
+            
+            // Calculate stats
+            const totalKits = new Set(heatmapData.map(d => d.body)).size;
+            const totalTeams = new Set(heatmapData.map(d => d.teamName)).size;
+            const totalMatches = heatmapData.reduce((sum, d) => sum + d.usageCount, 0);
+            const totalReferees = new Set(networkData.map(d => d.refereeName)).size;
+            
+            // Update UI
+            document.getElementById('totalMatches').textContent = totalMatches;
+            document.getElementById('totalKits').textContent = totalKits;
+            document.getElementById('totalTeams').textContent = totalTeams;
+            document.getElementById('totalReferees').textContent = totalReferees;
+            
+            // Animate numbers
+            animateNumbers();
+            
+        } catch (error) {
+            console.error('Error loading quick stats:', error);
+        }
+    }
+    
+    function animateNumbers() {
+        const counters = document.querySelectorAll('.stat-number');
+        counters.forEach(counter => {
+            const target = parseInt(counter.textContent);
+            let current = 0;
+            const increment = target / 50;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                counter.textContent = Math.floor(current);
+            }, 30);
+        });
+    }
+</script>
+
+<style>
+    .dashboard {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 40px 20px;
+    }
+    
+    h1 {
+        color: white;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        margin-bottom: 50px;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 250px;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 45px rgba(0,0,0,0.2);
+    }
+    
+    .card-icon {
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    
+    .success-card .card-icon { color: #28a745; }
+    .advantage-card .card-icon { color: #17a2b8; }
+    .heatmap-card .card-icon { color: #fd7e14; }
+    .goalkeeper-heatmap-card .card-icon { color: #28a745; }
+    .trend-card .card-icon { color: #6f42c1; }
+    .network-card .card-icon { color: #e83e8c; }
+    .referee-card .card-icon { color: #ffc107; }
+    .goalkeeper-card .card-icon { color: #20c997; }
+    .diversity-card .card-icon { color: #6610f2; }
+    .critical-card .card-icon { color: #dc3545; }
+    
+    .card-title {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .card-text {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+    
+    .quick-stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        padding: 30px 20px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .analysis-panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 30px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .analysis-panel h4 {
+        color: white;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+    
+    .analysis-item {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .analysis-item h6 {
+        color: white;
+        margin-bottom: 10px;
+    }
+    
+    .analysis-item p {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+    
+    h3 {
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    @@media (max-width: 768px) {
+        .dashboard {
+            padding: 20px 10px;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+        }
+        
+        .stat-card {
+            height: auto;
+            margin-bottom: 20px;
+        }
+        
+        .card-icon {
+            font-size: 2rem;
+        }
+    }
+</style> 

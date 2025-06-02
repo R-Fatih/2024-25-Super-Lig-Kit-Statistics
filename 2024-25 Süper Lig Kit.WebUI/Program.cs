@@ -5,7 +5,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("Default", x =>
+{
+    x.BaseAddress = builder.Environment.IsProduction()
+        ? new Uri("https://localhost:5000/")
+        : new Uri("https://localhost:7245/");
+});
+
 
 builder.WebHost.ConfigureKestrel(options =>
 {
@@ -37,5 +43,7 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+if (app.Environment.IsProduction())
+    app.Urls.Add("http://localhost:5001");
 
 app.Run();

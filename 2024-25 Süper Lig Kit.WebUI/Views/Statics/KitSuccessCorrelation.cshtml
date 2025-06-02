@@ -1,0 +1,224 @@
+@{
+    ViewData["Title"] = "Forma-Başarı Korelasyonu";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">📊 Forma-Başarı Korelasyonu Analizi</h2>
+            <div class="text-center mb-3">
+                <button onclick="loadKitSuccessData()" class="btn btn-primary btn-lg">
+                    <i class="fas fa-chart-bar"></i> Verileri Yükle
+                </button>
+                <button onclick="downloadCanvas()" class="btn btn-success btn-lg ml-2">
+                    <i class="fas fa-download"></i> İndir
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <canvas id="successCanvas" width="1400" height="800" style="border: 2px solid #333; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></canvas>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    async function loadKitSuccessData() {
+        try {
+            const response = await fetch('https://localhost:7245/api/Statics/GetKitSuccessCorrelation');
+            const data = await response.json();
+            drawKitSuccessChart(data);
+        } catch (error) {
+            console.error('Error loading kit success data:', error);
+            alert('Veri yüklenirken hata oluştu!');
+        }
+    }
+
+    function drawKitSuccessChart(data) {
+        const canvas = document.getElementById('successCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Set font and colors
+        ctx.font = "bold 16px Arial";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        
+        // Title
+        ctx.font = "bold 24px Arial";
+        ctx.fillText("🏆 FORMA-BAŞARI KORELASYONU", canvas.width / 2, 40);
+        
+        // Sort data by win percentage
+        data.sort((a, b) => b.winPercentage - a.winPercentage);
+        
+        const maxItems = Math.min(data.length, 15); // Show top 15
+        const barWidth = 80;
+        const barSpacing = 10;
+        const startX = 50;
+        const startY = 100;
+        const maxBarHeight = 500;
+        
+        // Find max values for scaling
+        const maxWinPercentage = Math.max(...data.map(d => d.winPercentage));
+        
+        for (let i = 0; i < maxItems; i++) {
+            const item = data[i];
+            const x = startX + (i * (barWidth + barSpacing));
+            
+            // Calculate bar height based on win percentage
+            const barHeight = (item.winPercentage / maxWinPercentage) * maxBarHeight;
+            
+            // Color gradient based on performance
+            let gradient = ctx.createLinearGradient(0, startY, 0, startY + maxBarHeight);
+            if (item.winPercentage >= 70) {
+                gradient.addColorStop(0, '#00ff88'); // Green for high success
+                gradient.addColorStop(1, '#00cc66');
+            } else if (item.winPercentage >= 50) {
+                gradient.addColorStop(0, '#ffcc00'); // Yellow for medium success
+                gradient.addColorStop(1, '#ff9900');
+            } else {
+                gradient.addColorStop(0, '#ff4444'); // Red for low success
+                gradient.addColorStop(1, '#cc0000');
+            }
+            
+            // Draw bar
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x, startY + maxBarHeight - barHeight, barWidth, barHeight);
+            
+            // Draw border
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, startY + maxBarHeight - barHeight, barWidth, barHeight);
+            
+            // Draw team name (rotated)
+            ctx.save();
+            ctx.translate(x + barWidth/2, startY + maxBarHeight + 20);
+            ctx.rotate(-Math.PI/4);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = "12px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(item.teamName, 0, 0);
+            ctx.restore();
+            
+            // Draw kit name
+            ctx.fillStyle = '#ffffff';
+            ctx.font = "10px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(item.body.substring(0, 10), x + barWidth/2, startY + maxBarHeight + 60);
+            
+            // Draw percentage on top of bar
+            ctx.fillStyle = '#ffffff';
+            ctx.font = "bold 12px Arial";
+            ctx.fillText(item.winPercentage.toFixed(1) + '%', x + barWidth/2, startY + maxBarHeight - barHeight - 10);
+            
+            // Draw additional stats
+            ctx.fillStyle = '#ffff88';
+            ctx.font = "10px Arial";
+            ctx.fillText(`G:${item.wins} B:${item.draws} M:${item.losses}`, x + barWidth/2, startY + maxBarHeight - barHeight + 15);
+            ctx.fillText(`Puan/Maç: ${item.pointsPerMatch.toFixed(2)}`, x + barWidth/2, startY + maxBarHeight - barHeight + 30);
+        }
+        
+        // Draw legend
+        drawLegend(ctx, canvas.width - 300, 100);
+        
+        // Draw statistics summary
+        drawStatsSummary(ctx, data, 50, canvas.height - 150);
+    }
+    
+    function drawLegend(ctx, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(x, y, 250, 120);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 250, 120);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("🏆 BAŞARI SEVİYELERİ", x + 10, y + 25);
+        
+        // High success
+        ctx.fillStyle = '#00ff88';
+        ctx.fillRect(x + 10, y + 35, 20, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "12px Arial";
+        ctx.fillText("70%+ (Mükemmel)", x + 40, y + 47);
+        
+        // Medium success
+        ctx.fillStyle = '#ffcc00';
+        ctx.fillRect(x + 10, y + 55, 20, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("50-70% (İyi)", x + 40, y + 67);
+        
+        // Low success
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(x + 10, y + 75, 20, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("50%- (Gelişmeli)", x + 40, y + 87);
+        
+        ctx.fillStyle = '#cccccc';
+        ctx.font = "10px Arial";
+        ctx.fillText("G:Galibiyet B:Beraberlik M:Mağlubiyet", x + 10, y + 105);
+    }
+    
+    function drawStatsSummary(ctx, data, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(x, y, 500, 100);
+        
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 500, 100);
+        
+        const totalMatches = data.reduce((sum, item) => sum + item.totalMatches, 0);
+        const avgWinPercentage = data.reduce((sum, item) => sum + item.winPercentage, 0) / data.length;
+        const bestKit = data[0];
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📈 GENEL İSTATİSTİKLER", x + 10, y + 25);
+        
+        ctx.font = "12px Arial";
+        ctx.fillText(`Toplam Maç: ${totalMatches}`, x + 10, y + 45);
+        ctx.fillText(`Ortalama Başarı: %${avgWinPercentage.toFixed(1)}`, x + 180, y + 45);
+        ctx.fillText(`En Başarılı: ${bestKit.teamName} (${bestKit.body})`, x + 10, y + 65);
+        ctx.fillText(`En Yüksek Başarı Oranı: %${bestKit.winPercentage.toFixed(1)}`, x + 10, y + 85);
+    }
+    
+    function downloadCanvas() {
+        const canvas = document.getElementById('successCanvas');
+        const link = document.createElement('a');
+        link.download = 'forma-basari-korelasyonu.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Auto load data when page loads
+    window.onload = function() {
+        setTimeout(loadKitSuccessData, 500);
+    };
+</script>
+
+<style>
+    #successCanvas {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .container-fluid {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    h2 {
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+</style> 

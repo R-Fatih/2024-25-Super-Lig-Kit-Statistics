@@ -1,0 +1,246 @@
+@{
+    ViewData["Title"] = "İç Saha Avantajı & Forma";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">🏠 İç Saha Avantajı & Forma Analizi</h2>
+            <div class="text-center mb-3">
+                <button onclick="loadHomeAdvantageData()" class="btn btn-primary btn-lg">
+                    <i class="fas fa-home"></i> Verileri Yükle
+                </button>
+                <button onclick="downloadCanvas()" class="btn btn-success btn-lg ml-2">
+                    <i class="fas fa-download"></i> İndir
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <canvas id="homeAdvantageCanvas" width="1600" height="900" style="border: 2px solid #333; background: linear-gradient(135deg, #2E8B57 0%, #228B22 100%);"></canvas>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    async function loadHomeAdvantageData() {
+        try {
+            const response = await fetch('https://localhost:7245/api/Statics/GetHomeAdvantageByKit');
+            const data = await response.json();
+            drawHomeAdvantageChart(data);
+        } catch (error) {
+            console.error('Error loading home advantage data:', error);
+            alert('Veri yüklenirken hata oluştu!');
+        }
+    }
+
+    function drawHomeAdvantageChart(data) {
+        const canvas = document.getElementById('homeAdvantageCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Title
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("🏠 İÇ SAHA AVANTAJI & FORMA ANALİZİ", canvas.width / 2, 40);
+        
+        // Sort by home advantage index
+        data.sort((a, b) => b.homeAdvantageIndex - a.homeAdvantageIndex);
+        
+        const maxItems = Math.min(data.length, 12);
+        const itemWidth = 120;
+        const itemHeight = 60;
+        const cols = 4;
+        const rows = Math.ceil(maxItems / cols);
+        const startX = 80;
+        const startY = 100;
+        
+        // Draw comparison chart
+        for (let i = 0; i < maxItems; i++) {
+            const item = data[i];
+            const col = i % cols;
+            const row = Math.floor(i / cols);
+            const x = startX + (col * (itemWidth * 3 + 50));
+            const y = startY + (row * (itemHeight * 4 + 40));
+            
+            // Draw team info box
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(x, y, itemWidth * 3, itemHeight * 3.5);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, itemWidth * 3, itemHeight * 3.5);
+            
+            // Team name and kit
+            ctx.fillStyle = '#ffffff';
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(item.teamName, x + (itemWidth * 1.5), y + 20);
+            ctx.font = "12px Arial";
+            ctx.fillText(item.body, x + (itemWidth * 1.5), y + 40);
+            
+            // Home stats
+            const homeBarHeight = Math.max(5, (item.homeWinPercentage / 100) * 80);
+            const homeColor = item.homeWinPercentage >= 60 ? '#00ff00' : 
+                            item.homeWinPercentage >= 40 ? '#ffff00' : '#ff4444';
+            
+            ctx.fillStyle = homeColor;
+            ctx.fillRect(x + 20, y + 60 + (80 - homeBarHeight), 40, homeBarHeight);
+            ctx.strokeStyle = '#ffffff';
+            ctx.strokeRect(x + 20, y + 60, 40, 80);
+            
+            // Away stats  
+            const awayBarHeight = Math.max(5, (item.awayWinPercentage / 100) * 80);
+            const awayColor = item.awayWinPercentage >= 60 ? '#00ff00' : 
+                            item.awayWinPercentage >= 40 ? '#ffff00' : '#ff4444';
+            
+            ctx.fillStyle = awayColor;
+            ctx.fillRect(x + 80, y + 60 + (80 - awayBarHeight), 40, awayBarHeight);
+            ctx.strokeStyle = '#ffffff';
+            ctx.strokeRect(x + 80, y + 60, 40, 80);
+            
+            // Advantage indicator
+            const advantageWidth = Math.abs(item.homeAdvantageIndex) * 2;
+            const advantageColor = item.homeAdvantageIndex > 0 ? '#00ff88' : '#ff4444';
+            
+            ctx.fillStyle = advantageColor;
+            ctx.fillRect(x + 140, y + 60 + (40 - advantageWidth/4), 40, Math.max(5, advantageWidth/2));
+            ctx.strokeStyle = '#ffffff';
+            ctx.strokeRect(x + 140, y + 60, 40, 80);
+            
+            // Labels
+            ctx.fillStyle = '#ffffff';
+            ctx.font = "10px Arial";
+            ctx.textAlign = "center";
+            
+            ctx.fillText("İÇ SAHA", x + 40, y + 155);
+            ctx.fillText(`%${item.homeWinPercentage.toFixed(1)}`, x + 40, y + 170);
+            
+            ctx.fillText("DEPLASMAN", x + 100, y + 155);
+            ctx.fillText(`%${item.awayWinPercentage.toFixed(1)}`, x + 100, y + 170);
+            
+            ctx.fillText("AVANTAJ", x + 160, y + 155);
+            ctx.fillText(`${item.homeAdvantageIndex.toFixed(1)}`, x + 160, y + 170);
+            
+            // Match counts
+            ctx.font = "9px Arial";
+            ctx.fillText(`${item.homeMatches} maç`, x + 40, y + 185);
+            ctx.fillText(`${item.awayMatches} maç`, x + 100, y + 185);
+        }
+        
+        // Draw legend
+        drawHomeAdvantageLegend(ctx, canvas.width - 350, 100);
+        
+        // Draw top performers
+        drawTopPerformers(ctx, data, 50, canvas.height - 200);
+    }
+    
+    function drawHomeAdvantageLegend(ctx, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillRect(x, y, 300, 200);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 300, 200);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📊 LEGEND", x + 10, y + 25);
+        
+        // Performance levels
+        ctx.font = "12px Arial";
+        ctx.fillText("Başarı Seviyeleri:", x + 10, y + 50);
+        
+        ctx.fillStyle = '#00ff00';
+        ctx.fillRect(x + 10, y + 60, 15, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("60%+ Mükemmel", x + 35, y + 72);
+        
+        ctx.fillStyle = '#ffff00';
+        ctx.fillRect(x + 10, y + 80, 15, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("40-60% Orta", x + 35, y + 92);
+        
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(x + 10, y + 100, 15, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("40%- Düşük", x + 35, y + 112);
+        
+        // Advantage explanation
+        ctx.font = "12px Arial";
+        ctx.fillText("İç Saha Avantajı:", x + 10, y + 140);
+        ctx.fillStyle = '#00ff88';
+        ctx.fillRect(x + 10, y + 150, 15, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("Pozitif (Avantajlı)", x + 35, y + 162);
+        
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(x + 10, y + 170, 15, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("Negatif (Dezavantajlı)", x + 35, y + 182);
+    }
+    
+    function drawTopPerformers(ctx, data, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(x, y, 700, 150);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 700, 150);
+        
+        const bestHomeAdvantage = data[0];
+        const worstHomeAdvantage = data[data.length - 1];
+        const bestHome = data.reduce((max, item) => item.homeWinPercentage > max.homeWinPercentage ? item : max);
+        const bestAway = data.reduce((max, item) => item.awayWinPercentage > max.awayWinPercentage ? item : max);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("🏆 ÖNE ÇIKAN PERFORMANSLAR", x + 10, y + 25);
+        
+        ctx.font = "12px Arial";
+        ctx.fillText(`🥇 En İyi İç Saha Avantajı: ${bestHomeAdvantage.teamName} (+${bestHomeAdvantage.homeAdvantageIndex.toFixed(1)})`, x + 10, y + 50);
+        ctx.fillText(`🥉 En Düşük İç Saha Avantajı: ${worstHomeAdvantage.teamName} (${worstHomeAdvantage.homeAdvantageIndex.toFixed(1)})`, x + 10, y + 70);
+        ctx.fillText(`🏠 En İyi İç Saha: ${bestHome.teamName} (%${bestHome.homeWinPercentage.toFixed(1)})`, x + 10, y + 90);
+        ctx.fillText(`✈️ En İyi Deplasman: ${bestAway.teamName} (%${bestAway.awayWinPercentage.toFixed(1)})`, x + 10, y + 110);
+        
+        // Additional stats
+        const avgHomeAdvantage = data.reduce((sum, item) => sum + item.homeAdvantageIndex, 0) / data.length;
+        ctx.fillText(`📊 Ortalama İç Saha Avantajı: ${avgHomeAdvantage.toFixed(1)}`, x + 10, y + 130);
+    }
+    
+    function downloadCanvas() {
+        const canvas = document.getElementById('homeAdvantageCanvas');
+        const link = document.createElement('a');
+        link.download = 'ic-saha-avantaji-forma.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Auto load data when page loads
+    window.onload = function() {
+        setTimeout(loadHomeAdvantageData, 500);
+    };
+</script>
+
+<style>
+    #homeAdvantageCanvas {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .container-fluid {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    h2 {
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+</style> 

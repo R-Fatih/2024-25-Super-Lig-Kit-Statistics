@@ -19,16 +19,16 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var client= _client.CreateClient();
-             var response=await client.GetFromJsonAsync<List<Jersey>>("https://localhost:7245/api/Jerseys");
+            var client= _client.CreateClient("Default");
+             var response=await client.GetFromJsonAsync<List<Jersey>>("/api/Jerseys");
 
             return View(response);
         }
         [Route("Jersey/Index/{id}")]
         public async Task<IActionResult> Index(int id)
         {
-            var client = _client.CreateClient();
-            var response = await client.GetFromJsonAsync<List<Jersey>>($"https://localhost:7245/api/Jerseys/GetAllJerseysByTeam?teamId={id}");
+            var client = _client.CreateClient("Default");
+            var response = await client.GetFromJsonAsync<List<Jersey>>($"/api/Jerseys/GetAllJerseysByTeam?teamId={id}");
 
             return View(response);
         }
@@ -37,15 +37,15 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
         public async Task<IActionResult> Images(int id)
         {
-            var client = _client.CreateClient();
-            var response = await client.GetFromJsonAsync<List<JerseyImage>>($"https://localhost:7245/api/Teams/GetKitImagesByKit?kitid={id}");
+            var client = _client.CreateClient("Default");
+            var response = await client.GetFromJsonAsync<List<JerseyImage>>($"/api/Teams/GetKitImagesByKit?kitid={id}");
             ViewBag.id= id; 
             return View(response);
         }
         [Route("Jersey/Images/Create/{id}")]
         public async Task<IActionResult> CreateJ(int id)
         {
-            var client = _client.CreateClient();
+            var client = _client.CreateClient("Default");
 
             return View();
         }
@@ -55,8 +55,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         public async Task<IActionResult> CreateJ(CreateJerseyImageDto Jersey,int id)
         {
             Jersey.JerseyId=id;
-            var client = _client.CreateClient();
-            var response = await client.PostAsJsonAsync("https://localhost:7245/api/JerseyImages", Jersey);
+            var client = _client.CreateClient("Default");
+            var response = await client.PostAsJsonAsync("/api/JerseyImages", Jersey);
 
             // Takım oluşturma işlemi
             return RedirectToAction("Index");
@@ -67,8 +67,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
         public async Task<IActionResult> Create()
         {
-            var client = _client.CreateClient();
-            ViewBag.Teams = new SelectList(await client.GetFromJsonAsync<List<Team>>("https://localhost:7245/api/Teams"), "TeamId", "Name");
+            var client = _client.CreateClient("Default");
+            ViewBag.Teams = new SelectList(await client.GetFromJsonAsync<List<Team>>("/api/Teams"), "TeamId", "Name");
             return View();
         }
 
@@ -76,8 +76,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         public async Task<IActionResult> Create(CreateJerseyDto Jersey)
         {
             
-                var client= _client.CreateClient();
-                var response=await client.PostAsJsonAsync("https://localhost:7245/api/Jerseys",Jersey);
+                var client= _client.CreateClient("Default");
+                var response=await client.PostAsJsonAsync("/api/Jerseys",Jersey);
 
             // Takım oluşturma işlemi
             return RedirectToAction("Index");
@@ -89,8 +89,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> Update(int id)
         {
-            var client = _client.CreateClient();
-            var response = await client.GetFromJsonAsync<UpdateJerseyDto>($"https://localhost:7245/api/Jerseys/{id}");
+            var client = _client.CreateClient("Default");
+            var response = await client.GetFromJsonAsync<UpdateJerseyDto>($"/api/Jerseys/{id}");
 
 
             return View(response);
@@ -100,8 +100,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         public async Task<IActionResult> Update(UpdateJerseyDto Jersey)
         {
             
-            var client = _client.CreateClient();
-            var response =await client.PutAsJsonAsync("https://localhost:7245/api/Jerseys", Jersey);
+            var client = _client.CreateClient("Default");
+            var response =await client.PutAsJsonAsync("/api/Jerseys", Jersey);
                 // Takım güncelleme işlemi
                 return RedirectToAction("Index");
             

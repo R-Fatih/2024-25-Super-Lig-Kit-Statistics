@@ -23,13 +23,7 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetMatches(int week)
         {
-            var matches =await _context.Matches.Include(x=>x.HomeTeam).Include(y=>y.AwayTeam ).Include(z=>z.Referee)
-                .Include(w=>w.HomeTeamJerseyImageGK)
-                .Include(w=>w.HomeTeamJerseyImage)
-                .Include(w=>w.RefereeJerseyImage)
-                .Include(w=>w.AwayTeamJerseyImageGK)
-                .Include(w=>w.AwayTeamJerseyImage)
-                .Where(x=>x.Week==week)
+            var matches =await _context.Matches
                 .ToListAsync();
             return Ok(matches);
         }
@@ -45,7 +39,8 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
                 .Include(w=>w.AwayTeamJerseyImage).ThenInclude(x => x.Jersey)
                 .Where(x => x.HomeTeamId == teamId || x.AwayTeamId == teamId).OrderBy(x=>x.Week)
                 .Select(x =>new Match
-                {
+                {Week=x.Week,
+                MainId=x.MainId,
                    HomeMS= x.HomeMS,
                    AwayMS= x.AwayMS,
                     HomeTeamId= x.HomeTeamId,
@@ -76,9 +71,35 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
                             IsKeeper = x.AwayTeamJerseyImage.Jersey.IsKeeper
                         }
                     },
-
+                    HomeTeamJerseyImageGK = new JerseyImage
+                    {
+                        ImgPath = x.HomeTeamJerseyImageGK.ImgPath,
+                        JerseyId = x.HomeTeamJerseyImageGK.JerseyId,
+                        JerseyImageId = x.HomeTeamJerseyImageGK.JerseyImageId,
+                        Jersey = new Jersey
+                        {
+                            Name = x.HomeTeamJerseyImageGK.Jersey.Name,
+                            Path = x.HomeTeamJerseyImageGK.Jersey.Path,
+                            Id = x.HomeTeamJerseyImageGK.Jersey.Id,
+                            IsKeeper = x.HomeTeamJerseyImageGK.Jersey.IsKeeper
+                        }
+                    },
+                    AwayTeamJerseyImageGK = new JerseyImage
+                    {
+                        ImgPath = x.AwayTeamJerseyImageGK.ImgPath,
+                        JerseyId = x.AwayTeamJerseyImageGK.JerseyId,
+                        JerseyImageId = x.AwayTeamJerseyImageGK.JerseyImageId,
+                        Jersey = new Jersey
+                        {
+                            Name = x.AwayTeamJerseyImageGK.Jersey.Name,
+                            Path = x.AwayTeamJerseyImageGK.Jersey.Path,
+                            Id = x.AwayTeamJerseyImageGK.Jersey.Id,
+                            IsKeeper = x.AwayTeamJerseyImageGK.Jersey.IsKeeper
+                        }
+                    },
                 })
                 .ToListAsync();
+            matches = matches.OrderBy(x => x.Week).ToList();
             return Ok(matches);
         }
         [HttpGet("GetMatchesByReferee")]

@@ -1,0 +1,390 @@
+@{
+    ViewData["Title"] = "Hakem Forma Analizi";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center mb-4">👨‍⚖️ Hakem Forma Tercihleri & Uyum Analizi</h2>
+            <div class="text-center mb-3">
+                <button onclick="loadRefereeData()" class="btn btn-primary btn-lg">
+                    <i class="fas fa-whistle"></i> Hakem Verileri
+                </button>
+                <button onclick="downloadCanvas()" class="btn btn-success btn-lg ml-2">
+                    <i class="fas fa-download"></i> İndir
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <canvas id="refereeCanvas" width="1600" height="1000" style="border: 2px solid #333; background: linear-gradient(135deg, #2C1810 0%, #8B4513 100%);"></canvas>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    async function loadRefereeData() {
+        try {
+            const [preferencesResponse, harmonyResponse] = await Promise.all([
+                fetch('https://localhost:7245/api/Statics/GetRefereeKitPreferences'),
+                fetch('https://localhost:7245/api/Statics/GetRefereeTeamHarmony')
+            ]);
+            
+            const preferencesData = await preferencesResponse.json();
+            const harmonyData = await harmonyResponse.json();
+            
+            drawRefereeAnalysis(preferencesData, harmonyData);
+        } catch (error) {
+            console.error('Error loading referee data:', error);
+            alert('Veri yüklenirken hata oluştu!');
+        }
+    }
+
+    function drawRefereeAnalysis(preferences, harmony) {
+        const canvas = document.getElementById('refereeCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Title
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 28px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("👨‍⚖️ HAKEM FORMA TERCİHLERİ & UYUM ANALİZİ", canvas.width / 2, 40);
+        
+        // Draw referee preferences chart
+        drawRefereePreferences(ctx, preferences, 50, 80, 700, 400);
+        
+        // Draw harmony matrix
+        drawHarmonyMatrix(ctx, harmony, 800, 80, 750, 400);
+        
+        // Draw FIFA referee analysis
+        drawFifaAnalysis(ctx, preferences, 50, 520, 700, 200);
+        
+        // Draw clash analysis
+        drawClashAnalysis(ctx, harmony, 800, 520, 750, 200);
+        
+        // Draw statistics
+        drawRefereeStats(ctx, preferences, harmony, 50, canvas.height - 200);
+    }
+    
+    function drawRefereePreferences(ctx, data, x, y, width, height) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📊 Hakem Forma Tercihleri", x + 10, y + 25);
+        
+        // Group by referee and get top referees
+        const refereeStats = {};
+        data.forEach(item => {
+            if (!refereeStats[item.refereeName]) {
+                refereeStats[item.refereeName] = {
+                    name: item.refereeName,
+                    totalMatches: item.totalMatches,
+                    isFifa: item.isFifa,
+                    kits: []
+                };
+            }
+            refereeStats[item.refereeName].kits.push({
+                kit: item.body,
+                count: item.kitCount,
+                percentage: item.kitUsagePercentage
+            });
+        });
+        
+        const topReferees = Object.values(refereeStats)
+            .sort((a, b) => b.totalMatches - a.totalMatches)
+            .slice(0, 8);
+        
+        // Draw referee bars
+        const barHeight = 35;
+        const barSpacing = 5;
+        
+        topReferees.forEach((referee, index) => {
+            const barY = y + 50 + (index * (barHeight + barSpacing));
+            const maxBarWidth = width - 250;
+            
+            // Referee name and info
+            ctx.fillStyle = referee.isFifa ? '#FFD700' : '#ffffff';
+            ctx.font = "12px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(`${referee.name} ${referee.isFifa ? '⭐' : ''}`, x + 10, barY + 20);
+            ctx.fillText(`${referee.totalMatches} maç`, x + 10, barY + 35);
+            
+            // Most used kit
+            const mostUsedKit = referee.kits.sort((a, b) => b.count - a.count)[0];
+            if (mostUsedKit) {
+                const barWidth = (mostUsedKit.percentage / 100) * maxBarWidth;
+                
+                // Gradient based on usage percentage
+                let gradient = ctx.createLinearGradient(x + 200, barY, x + 200 + maxBarWidth, barY);
+                if (mostUsedKit.percentage >= 70) {
+                    gradient.addColorStop(0, '#00ff88');
+                    gradient.addColorStop(1, '#00cc66');
+                } else if (mostUsedKit.percentage >= 50) {
+                    gradient.addColorStop(0, '#ffcc00');
+                    gradient.addColorStop(1, '#ff9900');
+                } else {
+                    gradient.addColorStop(0, '#ff6666');
+                    gradient.addColorStop(1, '#cc3333');
+                }
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x + 200, barY + 5, barWidth, barHeight - 10);
+                
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 200, barY + 5, maxBarWidth, barHeight - 10);
+                
+                // Kit info
+                ctx.fillStyle = '#ffffff';
+                ctx.font = "10px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(`${mostUsedKit.kit}`, x + 200 + barWidth/2, barY + 20);
+                ctx.fillText(`%${mostUsedKit.percentage.toFixed(1)}`, x + 200 + barWidth/2, barY + 32);
+            }
+        });
+    }
+    
+    function drawHarmonyMatrix(ctx, data, x, y, width, height) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("🤝 Hakem-Takım Uyum Matrisi", x + 10, y + 25);
+        
+        // Get top harmony combinations
+        const topHarmony = data
+            .sort((a, b) => b.matchCount - a.matchCount)
+            .slice(0, 20);
+        
+        const cellSize = 30;
+        const matrixStartX = x + 20;
+        const matrixStartY = y + 50;
+        
+        topHarmony.forEach((item, index) => {
+            const row = Math.floor(index / 5);
+            const col = index % 5;
+            const cellX = matrixStartX + (col * (cellSize + 50));
+            const cellY = matrixStartY + (row * (cellSize + 50));
+            
+            // Cell color based on clash
+            const cellColor = item.hasClash ? '#ff4444' : '#00ff88';
+            
+            ctx.fillStyle = cellColor;
+            ctx.fillRect(cellX, cellY, cellSize * 4, cellSize);
+            
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(cellX, cellY, cellSize * 4, cellSize);
+            
+            // Text info
+            ctx.fillStyle = '#000000';
+            ctx.font = "8px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText(`${item.refereeName.substring(0, 8)}`, cellX + 2, cellY + 10);
+            ctx.fillText(`vs ${item.teamName.substring(0, 8)}`, cellX + 2, cellY + 20);
+            ctx.fillText(`${item.matchCount} maç`, cellX + 2, cellY + 28);
+        });
+        
+        // Legend
+        ctx.fillStyle = '#00ff88';
+        ctx.fillRect(x + width - 120, y + 300, 15, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "10px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("Uyumlu", x + width - 100, y + 312);
+        
+        ctx.fillStyle = '#ff4444';
+        ctx.fillRect(x + width - 120, y + 320, 15, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("Çakışma", x + width - 100, y + 332);
+    }
+    
+    function drawFifaAnalysis(ctx, data, x, y, width, height) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("⭐ FIFA Hakem Analizi", x + 10, y + 25);
+        
+        const fifaReferees = data.filter(item => item.isFifa);
+        const nonFifaReferees = data.filter(item => !item.isFifa);
+        
+        const fifaCount = new Set(fifaReferees.map(r => r.refereeName)).size;
+        const nonFifaCount = new Set(nonFifaReferees.map(r => r.refereeName)).size;
+        const totalCount = fifaCount + nonFifaCount;
+        
+        // Pie chart for FIFA vs Non-FIFA
+        const centerX = x + width/4;
+        const centerY = y + height/2 + 20;
+        const radius = 60;
+        
+        // FIFA slice
+        const fifaAngle = (fifaCount / totalCount) * 2 * Math.PI;
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, 0, fifaAngle);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Non-FIFA slice
+        ctx.fillStyle = '#888888';
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, fifaAngle, 2 * Math.PI);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Labels
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(`FIFA: ${fifaCount}`, centerX, centerY + radius + 20);
+        ctx.fillText(`Diğer: ${nonFifaCount}`, centerX, centerY + radius + 35);
+        
+        // FIFA referee preferences
+        ctx.font = "12px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("FIFA Hakem Tercihleri:", x + width/2, y + 50);
+        
+        const fifaKitPrefs = {};
+        fifaReferees.forEach(item => {
+            fifaKitPrefs[item.body] = (fifaKitPrefs[item.body] || 0) + item.kitCount;
+        });
+        
+        const topFifaKits = Object.entries(fifaKitPrefs)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 5);
+        
+        topFifaKits.forEach(([kit, count], index) => {
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(`${index + 1}. ${kit}: ${count}`, x + width/2, y + 75 + (index * 20));
+        });
+    }
+    
+    function drawClashAnalysis(ctx, data, x, y, width, height) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width, height);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("⚠️ Forma Çakışma Analizi", x + 10, y + 25);
+        
+        const totalCombinations = data.length;
+        const clashCount = data.filter(item => item.hasClash).length;
+        const clashPercentage = (clashCount / totalCombinations * 100).toFixed(1);
+        
+        // Clash statistics
+        ctx.font = "14px Arial";
+        ctx.fillText(`Toplam Kombinasyon: ${totalCombinations}`, x + 10, y + 60);
+        ctx.fillText(`Çakışma Sayısı: ${clashCount}`, x + 10, y + 85);
+        ctx.fillStyle = clashCount > totalCombinations * 0.1 ? '#ff4444' : '#00ff88';
+        ctx.fillText(`Çakışma Oranı: %${clashPercentage}`, x + 10, y + 110);
+        
+        // Most problematic combinations
+        const problemCombos = data
+            .filter(item => item.hasClash)
+            .sort((a, b) => b.matchCount - a.matchCount)
+            .slice(0, 5);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText("En Problemli Kombinasyonlar:", x + 10, y + 140);
+        
+        problemCombos.forEach((combo, index) => {
+            ctx.fillStyle = '#ff6666';
+            ctx.font = "11px Arial";
+            ctx.fillText(`${combo.refereeName} vs ${combo.teamName} (${combo.matchCount} maç)`, 
+                        x + 10, y + 165 + (index * 15));
+        });
+    }
+    
+    function drawRefereeStats(ctx, preferences, harmony, x, y) {
+        ctx.fillStyle = 'rgba(0,0,0,0.9)';
+        ctx.fillRect(x, y, 1500, 150);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 1500, 150);
+        
+        const totalReferees = new Set(preferences.map(r => r.refereeName)).size;
+        const totalMatches = preferences.reduce((sum, item) => sum + item.kitCount, 0);
+        const avgMatchesPerReferee = (totalMatches / totalReferees).toFixed(1);
+        const mostActiveReferee = preferences.reduce((max, item) => 
+            item.totalMatches > max.totalMatches ? item : max);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = "bold 16px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText("📊 HAKEM İSTATİSTİKLERİ", x + 10, y + 25);
+        
+        ctx.font = "12px Arial";
+        ctx.fillText(`Toplam Hakem: ${totalReferees}`, x + 10, y + 50);
+        ctx.fillText(`Toplam Maç: ${totalMatches}`, x + 200, y + 50);
+        ctx.fillText(`Hakem Başına Ortalama: ${avgMatchesPerReferee}`, x + 400, y + 50);
+        
+        ctx.fillText(`En Aktif Hakem: ${mostActiveReferee.refereeName} (${mostActiveReferee.totalMatches} maç)`, x + 10, y + 75);
+        
+        const fifaCount = new Set(preferences.filter(r => r.isFifa).map(r => r.refereeName)).size;
+        ctx.fillText(`FIFA Hakem Sayısı: ${fifaCount}`, x + 10, y + 100);
+        
+        const clashRate = (harmony.filter(h => h.hasClash).length / harmony.length * 100).toFixed(1);
+        ctx.fillStyle = clashRate > 10 ? '#ff4444' : '#00ff88';
+        ctx.fillText(`Forma Çakışma Oranı: %${clashRate}`, x + 200, y + 100);
+    }
+    
+    function downloadCanvas() {
+        const canvas = document.getElementById('refereeCanvas');
+        const link = document.createElement('a');
+        link.download = 'hakem-forma-analizi.png';
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    // Auto load data when page loads
+    window.onload = function() {
+        setTimeout(loadRefereeData, 500);
+    };
+</script>
+
+<style>
+    #refereeCanvas {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .container-fluid {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    h2 {
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+</style> 

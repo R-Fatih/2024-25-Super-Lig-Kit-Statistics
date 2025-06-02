@@ -25,19 +25,24 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Index(string week)
+        public async Task<IActionResult> Index(string? week)
         {
-            var client = _client.CreateClient();
-            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches?week={week}");
-            return View(matches);
+            var client = _client.CreateClient("Default");
+            if (week != null)
+            {
+                var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"/api/Matches?week={week}");
+                return View(matches);
+            }
+            return View(new List<ResultMatchDto>());
         }
         [Route("Match/Index/{id}")]
         public async Task<IActionResult> Index(int id)
         {
-            var client = _client.CreateClient();
-            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches/GetMatchesByTeam?teamId={id}");
+            var client = _client.CreateClient("Default");
+            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"/api/Matches/GetMatchesByTeam?teamId={id}");
             return View(matches);
         }
+
         public async Task<IActionResult> TeamStatistics()
         {
             return View();
@@ -53,51 +58,57 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
 
         public async Task<IActionResult> GetMatchesByTeam(int id)
         {
-            var client = _client.CreateClient();
-            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches/GetMatchesByTeam?teamId={id}");
+            var client = _client.CreateClient("Default");
+            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"/api/Matches/GetMatchesByTeam?teamId={id}");
             ViewBag.id = id;
             return View(matches);
         }
-
+        public async Task<IActionResult> GetMatchesByTeamJson(int id)
+        {
+            var client = _client.CreateClient("Default");
+            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"/api/Matches/GetMatchesByTeam?teamId={id}");
+            ViewBag.id = id;
+            return Json(matches);
+        }
         public async Task<IActionResult> Referee(int id)
         {
-            var client = _client.CreateClient();
-            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches/GetMatchesByReferee?refereeId={id}");
+            var client = _client.CreateClient("Default");
+            var matches = await client.GetFromJsonAsync<List<ResultMatchDto>>($"/api/Matches/GetMatchesByReferee?refereeId={id}");
             return View("Index", matches);
         }
 
         public async Task<IActionResult> CrossTable()
         {
-            var client = _client.CreateClient();
-            var match = await client.GetFromJsonAsync<List<Class1>>($"https://localhost:7245/api/Matches/CrossTable\r\n");
+            var client = _client.CreateClient("Default");
+            var match = await client.GetFromJsonAsync<List<Class1>>($"/api/Matches/CrossTable\r\n");
             return View(match);
         }
         public async Task<IActionResult> CrossTable2()
         {
-            var client = _client.CreateClient();
-            var match = await client.GetFromJsonAsync<List<Class1>>($"https://localhost:7245/api/Matches/CrossTable\r\n");
+            var client = _client.CreateClient("Default");
+            var match = await client.GetFromJsonAsync<List<Class1>>($"/api/Matches/CrossTable\r\n");
             return Json(match);
         }
 
         public async Task<IActionResult> TeamDown()
         {
-            var client = _client.CreateClient();
-            var match = await client.GetFromJsonAsync<List<TeamDownDto>>($"https://localhost:7245/api/Matches/GetAllTeamsKitsWeeks");
+            var client = _client.CreateClient("Default");
+            var match = await client.GetFromJsonAsync<List<TeamDownDto>>($"/api/Matches/GetAllTeamsKitsWeeks");
             return Json(match);
         }
         public async Task<IActionResult> TeamDownGK()
         {
-            var client = _client.CreateClient();
-            var match = await client.GetFromJsonAsync<List<TeamDownDto>>($"https://localhost:7245/api/Matches/GetAllTeamsKitsWeeksGK");
+            var client = _client.CreateClient("Default");
+            var match = await client.GetFromJsonAsync<List<TeamDownDto>>($"/api/Matches/GetAllTeamsKitsWeeksGK");
             return Json(match);
         }
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var client = _client.CreateClient();
-            ViewBag.Teams = new SelectList(await client.GetFromJsonAsync<List<Team>>("https://localhost:7245/api/Teams"), "TeamId", "Name");
-            ViewBag.RefereeJerseyImageId = new SelectList(await client.GetFromJsonAsync<List<ResultJerseyDto>>("https://localhost:7245/api/Teams/GetKitsByTeam?teamId=20"), "Id", "Name");
-            ViewBag.Referees = new SelectList(await client.GetFromJsonAsync<List<ResultRefereeDto>>("https://localhost:7245/api/Referees"), "RefereeId", "RefereeName");
+            var client = _client.CreateClient("Default");
+            ViewBag.Teams = new SelectList(await client.GetFromJsonAsync<List<Team>>("/api/Teams"), "TeamId", "Name");
+            ViewBag.RefereeJerseyImageId = new SelectList(await client.GetFromJsonAsync<List<ResultJerseyDto>>("/api/Teams/GetKitsByTeam?teamId=20"), "Id", "Name");
+            ViewBag.Referees = new SelectList(await client.GetFromJsonAsync<List<ResultRefereeDto>>("/api/Referees"), "RefereeId", "RefereeName");
             return View();
         }
 
@@ -126,8 +137,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
             System.IO.File.WriteAllBytes($"D:\\2024-25 Sezonu\\Main\\{match.MainId}.png", imageBytes);
 
 
-            var client = _client.CreateClient();
-            var response = await client.PostAsJsonAsync("https://localhost:7245/api/Matches", new Match
+            var client = _client.CreateClient("Default");
+            var response = await client.PostAsJsonAsync("/api/Matches", new Match
             {
                 AwayMS = match.AwayMS,
                 AwayTeamId = match.AwayTeamId,
@@ -157,13 +168,13 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         public async Task<IActionResult> Update(int id)
         {
             ViewBag.id = id;
-            return View(new UpdateMatchDto { MatchId=id});
+            return View(new UpdateMatchDto { MatchId = id });
         }
         [HttpPost]
         public async Task<IActionResult> Update(UpdateMatchDto dto)
         {
-            var client = _client.CreateClient();
-            var responseMessage = await client.PutAsJsonAsync($"https://localhost:7245/api/Matches",dto);
+            var client = _client.CreateClient("Default");
+            var responseMessage = await client.PutAsJsonAsync($"/api/Matches", dto);
             if (responseMessage.IsSuccessStatusCode)
             {
                 return RedirectToAction("Index", "Home");
@@ -174,8 +185,8 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         [HttpGet]
         public async Task<IActionResult> GetRemain()
         {
-            var client = _client.CreateClient();
-            var jerseys = await client.GetFromJsonAsync<List<ResultMatchDto>>($"https://localhost:7245/api/Matches/RemainingMatches");
+            var client = _client.CreateClient("Default");
+            var jerseys = await client.GetFromJsonAsync<List<ResultMatchDto>>($"/api/Matches/RemainingMatches");
 
             var a = (jerseys, new UpdateMatchDto());
             return View(a);
@@ -183,44 +194,45 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         }
 
         [HttpPost]
-		public async Task<IActionResult> GetRemain([Bind(Prefix = "Item1")] List<ResultMatchDto> match1, [Bind(Prefix ="Item2")] UpdateMatchDto matchdto)
-		{
-			
-            var client = _client.CreateClient();
-			var responseMessage = await client.PutAsJsonAsync($"https://localhost:7245/api/Matches", matchdto);
-			if (responseMessage.IsSuccessStatusCode)
-			{
-				return RedirectToAction("Index", "Home");
-			}
+        public async Task<IActionResult> GetRemain([Bind(Prefix = "Item1")] List<ResultMatchDto> match1, [Bind(Prefix = "Item2")] UpdateMatchDto matchdto)
+        {
 
-			return View();
-		}
+            var client = _client.CreateClient("Default");
+            var responseMessage = await client.PutAsJsonAsync($"/api/Matches", matchdto);
+            if (responseMessage.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Index", "Home");
+            }
 
-		[HttpGet]
+            return View();
+        }
+
+        [HttpGet]
         public async Task<ActionResult> GetHomeTeamJerseyGK(int homeTeamId)
         {
-            var client = _client.CreateClient();
-            var jerseys = await client.GetFromJsonAsync<List<ResultJerseyDto>>($"https://localhost:7245/api/Teams/GetKeeperJerseysByTeam?teamId={homeTeamId}");
+            var client = _client.CreateClient("Default");
+            var jerseys = await client.GetFromJsonAsync<List<ResultJerseyDto>>($"/api/Teams/GetKeeperJerseysByTeam?teamId={homeTeamId}");
+            var jerseysPlayer = await client.GetFromJsonAsync<List<ResultJerseyDto>>($"/api/Teams/GetKitsByTeam?teamId={homeTeamId}");
 
             // Takım ID'sine göre formaları alın
-            return Json(jerseys);
+            return Json(new { Player = jerseysPlayer, GoalKeeper = jerseys });
         }
         [HttpGet]
         public async Task<ActionResult> GetHomeKitJerseyById(int homeTeamId)
         {
-            var client = _client.CreateClient();
+            var client = _client.CreateClient("Default");
 
             // Takım ID'sine göre formaları alın
-            var jerseys = await client.GetFromJsonAsync<List<ResultJerseyImageDto>>($"https://localhost:7245/api/Teams/GetKitImagesByKit?kitid={homeTeamId}");
+            var jerseys = await client.GetFromJsonAsync<List<ResultJerseyImageDto>>($"/api/Teams/GetKitImagesByKit?kitid={homeTeamId}");
             return Json(jerseys);
         }
         [HttpGet]
         public async Task<ActionResult> GetHomeTeamJersey(int homeTeamId)
         {
-            var client = _client.CreateClient();
+            var client = _client.CreateClient("Default");
 
             // Takım ID'sine göre formaları alın
-            var jerseys = await client.GetFromJsonAsync<List<ResultJerseyDto>>($"https://localhost:7245/api/Teams/GetKitsByTeam?teamId={homeTeamId}");
+            var jerseys = await client.GetFromJsonAsync<List<ResultJerseyDto>>($"/api/Teams/GetKitsByTeam?teamId={homeTeamId}");
 
             return Json(jerseys);
         }
@@ -232,17 +244,17 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         [HttpGet]
         public async Task<ActionResult> GetRefWeek()
         {
-            var client = _client.CreateClient();
+            var client = _client.CreateClient("Default");
 
             // Takım ID'sine göre formaları alın
-            var jerseys = await client.GetFromJsonAsync<List<RefereeKitDto>>($"https://localhost:7245/api/Matches/RefereeWeek");
+            var jerseys = await client.GetFromJsonAsync<List<RefereeKitDto>>($"/api/Matches/RefereeWeek");
 
             return Json(jerseys);
         }
         public async Task<ResultMatchDto> Maçkolik(int? id)
         {
-            var client = _client.CreateClient();
-            var responseMessage = await client.GetAsync($"https://localhost:7245/api/Mackoliks/get?adres={id}");
+            var client = _client.CreateClient("Default");
+            var responseMessage = await client.GetAsync($"/api/Mackoliks/get?adres={id}");
             if (responseMessage.IsSuccessStatusCode)
             {
                 var jsonData = await responseMessage.Content.ReadAsStringAsync();

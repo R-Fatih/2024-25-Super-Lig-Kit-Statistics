@@ -5,5 +5,6 @@
 		public string TeamName { get; set; }
 		public string Name { get; set; }
 		public int KitCount { get; set; }
+		public string Path { get; set; }
 	}
 }

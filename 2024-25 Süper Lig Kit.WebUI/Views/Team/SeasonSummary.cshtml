@@ -1,0 +1,482 @@
+@{
+    ViewData["Title"] = "Takım Sezon Özeti";
+}
+
+<style>
+    .team-selector {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        color: white;
+    }
+
+    .kit-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+    }
+
+    .kit-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .kit-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 3px solid #f8f9fa;
+    }
+
+    .performance-stats {
+        background: linear-gradient(135deg, #1a73e8 0%, #004dbf 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 15px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+
+    .opponent-card {
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid #28a745;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .opponent-card:hover {
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .kit-small {
+        width: 30px;
+        height: 30px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin: 0 2px;
+    }
+
+    .team-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+    .vs-badge {
+        background: #6c757d;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin: 0 10px;
+    }
+
+    .win { border-left-color: #28a745; }
+    .draw { border-left-color: #ffc107; }
+    .loss { border-left-color: #dc3545; }
+
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 50px;
+    }
+
+    .section-title {
+        color: #2c3e50;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+        margin-bottom: 25px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Takım Seçici -->
+    <div class="team-selector">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-0">🏆 Takım Sezon Özeti</h2>
+                <p class="mb-0">Takımınızın forma tercihleri ve performans analizi</p>
+            </div>
+            <div class="col-md-4">
+                <select class="form-select form-select-lg" id="teamSelector">
+                    <option value="">Takım Seçiniz...</option>
+                    @if (ViewBag.Teams != null)
+                    {
+                        @foreach (var team in ViewBag.Teams)
+                        {
+                            <option value="@team.teamId">@team.teamName</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Yükleniyor...</span>
+        </div>
+        <p class="mt-2">Veriler yükleniyor...</p>
+    </div>
+
+    <!-- Ana İçerik -->
+    <div id="mainContent" style="display: none;">
+        <!-- Takım Bilgileri ve Genel Performans -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="performance-stats">
+                    <div class="row text-center">
+                        <div class="col-6 col-md-2">
+                            <div class="stat-item">
+                                <span class="stat-number" id="totalMatches">-</span>
+                                <small>Toplam Maç</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-item">
+                                <span class="stat-number" id="totalWins">-</span>
+                                <small>Galibiyet</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-item">
+                                <span class="stat-number" id="totalDraws">-</span>
+                                <small>Beraberlik</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-item">
+                                <span class="stat-number" id="totalLosses">-</span>
+                                <small>Mağlubiyet</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-item">
+                                <span class="stat-number" id="winPercentage">-</span>
+                                <small>Başarı %</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-item">
+                                <span class="stat-number" id="pointsPerMatch">-</span>
+                                <small>Maç/Puan</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forma İstatistikleri -->
+        <div class="row mb-4">
+            <!-- Oyuncu Formaları -->
+            <div class="col-lg-6">
+                <h3 class="section-title">👕 Oyuncu Formaları</h3>
+                <div class="chart-container">
+                    <canvas id="playerKitsChart" height="400"></canvas>
+                </div>
+                <div id="playerKitsList" class="row">
+                    <!-- Kit kartları buraya gelecek -->
+                </div>
+            </div>
+
+            <!-- Kaleci Formaları -->
+            <div class="col-lg-6">
+                <h3 class="section-title">🥅 Kaleci Formaları</h3>
+                <div class="chart-container">
+                    <canvas id="goalkeeperKitsChart" height="400"></canvas>
+                </div>
+                <div id="goalkeeperKitsList" class="row">
+                    <!-- GK kit kartları buraya gelecek -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Rakip Takım Maçları -->
+        <div class="row">
+            <div class="col-12">
+                <h3 class="section-title">⚔️ Rakiplere Karşı Forma Tercihleri</h3>
+                <div class="chart-container">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Rakip</th>
+                                    <th>İç Saha</th>
+                                    <th>Forma</th>
+                                    <th>Kaleci</th>
+                                    <th>Sonuç</th>
+                                    <th>Deplasman</th>
+                                    <th>Forma</th>
+                                    <th>Kaleci</th>
+                                    <th>Sonuç</th>
+                                </tr>
+                            </thead>
+                            <tbody id="opponentMatchupsTable">
+                                <!-- Rakip maçları buraya gelecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let playerKitsChart = null;
+let goalkeeperKitsChart = null;
+
+document.getElementById('teamSelector').addEventListener('change', function() {
+    const teamId = this.value;
+    if (teamId) {
+        loadTeamSeasonSummary(teamId);
+    } else {
+        document.getElementById('mainContent').style.display = 'none';
+    }
+});
+
+async function loadTeamSeasonSummary(teamId) {
+    // Loading göster
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('mainContent').style.display = 'none';
+    
+    try {
+            const response = await fetch(`https://localhost:7245/api/Statics/GetTeamSeasonSummary/${teamId}`);
+        const data = await response.json();
+        
+        // Ana içeriği güncelle
+        updatePerformanceStats(data.performanceStats);
+        updatePlayerKits(data.playerKits);
+        updateGoalkeeperKits(data.goalkeeperKits);
+        updateOpponentMatchups(data.opponentMatchups);
+        
+        // Loading gizle, içeriği göster
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error loading season summary:', error);
+        alert('Veri yüklenirken hata oluştu!');
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+}
+
+function updatePerformanceStats(stats) {
+    document.getElementById('totalMatches').textContent = stats.totalMatches;
+    document.getElementById('totalWins').textContent = stats.totalWins;
+    document.getElementById('totalDraws').textContent = stats.totalDraws;
+    document.getElementById('totalLosses').textContent = stats.totalLosses;
+    document.getElementById('winPercentage').textContent = stats.winPercentage + '%';
+    document.getElementById('pointsPerMatch').textContent = stats.pointsPerMatch;
+}
+
+function updatePlayerKits(kits) {
+    // Grafik güncelle
+    if (playerKitsChart) {
+        playerKitsChart.destroy();
+    }
+    
+    const ctx = document.getElementById('playerKitsChart').getContext('2d');
+    playerKitsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: kits.map(kit => kit.kitName),
+            datasets: [{
+                data: kits.map(kit => kit.totalUsage),
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                    '#9966FF', '#FF9F40', '#FF6B6B', '#4ECDC4'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Liste güncelle
+    const playerKitsList = document.getElementById('playerKitsList');
+    playerKitsList.innerHTML = '';
+    
+    kits.forEach(kit => {
+        const kitCard = `
+            <div class="col-md-6 mb-3">
+                <div class="kit-card p-3">
+                    <div class="d-flex align-items-center">
+                        <img src="${kit.kitImagePath || '/images/default-kit.png'}" 
+                             alt="${kit.kitName}" class="kit-image me-3">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${kit.kitName}</h6>
+                            <div class="small text-muted">
+                                <div>Kullanım: ${kit.totalUsage} (İç: ${kit.homeUsage}, Dış: ${kit.awayUsage})</div>
+                                <div>Başarı: ${kit.wins}G ${kit.draws}B ${kit.losses}M (%${kit.winPercentage})</div>
+                                <div>Gol: ${kit.goalsFor}-${kit.goalsAgainst}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        playerKitsList.innerHTML += kitCard;
+    });
+}
+
+function updateGoalkeeperKits(kits) {
+    // Grafik güncelle
+    if (goalkeeperKitsChart) {
+        goalkeeperKitsChart.destroy();
+    }
+    
+    const ctx = document.getElementById('goalkeeperKitsChart').getContext('2d');
+    goalkeeperKitsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: kits.map(kit => kit.kitName),
+            datasets: [{
+                data: kits.map(kit => kit.totalUsage),
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                    '#9966FF', '#FF9F40', '#FF6B6B', '#4ECDC4'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Liste güncelle
+    const goalkeeperKitsList = document.getElementById('goalkeeperKitsList');
+    goalkeeperKitsList.innerHTML = '';
+    
+    kits.forEach(kit => {
+        const kitCard = `
+            <div class="col-md-6 mb-3">
+                <div class="kit-card p-3">
+                    <div class="d-flex align-items-center">
+                        <img src="${kit.kitImagePath || '/images/default-kit.png'}" 
+                             alt="${kit.kitName}" class="kit-image me-3">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${kit.kitName}</h6>
+                            <div class="small text-muted">
+                                <div>Kullanım: ${kit.totalUsage} (İç: ${kit.homeUsage}, Dış: ${kit.awayUsage})</div>
+                                <div>Başarı: ${kit.wins}G ${kit.draws}B ${kit.losses}M (%${kit.winPercentage})</div>
+                                <div>Gol: ${kit.goalsFor}-${kit.goalsAgainst}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        goalkeeperKitsList.innerHTML += kitCard;
+    });
+}
+
+function updateOpponentMatchups(matchups) {
+    const tableBody = document.getElementById('opponentMatchupsTable');
+    tableBody.innerHTML = '';
+    
+    // Rakiplere göre grupla
+    const groupedByOpponent = {};
+    matchups.forEach(match => {
+        if (!groupedByOpponent[match.opponentId]) {
+            groupedByOpponent[match.opponentId] = {
+                opponent: match,
+                homeMatches: [],
+                awayMatches: []
+            };
+        }
+        
+        if (match.homeKitUsed) {
+            groupedByOpponent[match.opponentId].homeMatches.push(match);
+        }
+        if (match.awayKitUsed) {
+            groupedByOpponent[match.opponentId].awayMatches.push(match);
+        }
+    });
+    
+    Object.values(groupedByOpponent).forEach(group => {
+        const homeMatch = group.homeMatches[0];
+        const awayMatch = group.awayMatches[0];
+        
+        const row = `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <img src="${group.opponent.opponentLogo || '/images/default-logo.png'}" 
+                             alt="${group.opponent.opponentName}" class="team-logo me-2">
+                        <span>${group.opponent.opponentName}</span>
+                    </div>
+                </td>
+                <td>🏠</td>
+                <td>
+                    ${homeMatch ? `<img src="${homeMatch.homeKitImagePath || '/images/default-kit.png'}" class="kit-small" title="${homeMatch.homeKitUsed}">` : '-'}
+                </td>
+                <td>
+                    ${homeMatch ? `<img src="${homeMatch.homeGKKitImagePath || '/images/default-kit.png'}" class="kit-small" title="${homeMatch.homeGKKitUsed}">` : '-'}
+                </td>
+                <td>
+                    ${homeMatch ? `<span class="badge ${getResultClass(homeMatch.homeWins, homeMatch.homeDraws, homeMatch.homeLosses)}">${homeMatch.homeScore}</span>` : '-'}
+                </td>
+                <td>✈️</td>
+                <td>
+                    ${awayMatch ? `<img src="${awayMatch.awayKitImagePath || '/images/default-kit.png'}" class="kit-small" title="${awayMatch.awayKitUsed}">` : '-'}
+                </td>
+                <td>
+                    ${awayMatch ? `<img src="${awayMatch.awayGKKitImagePath || '/images/default-kit.png'}" class="kit-small" title="${awayMatch.awayGKKitUsed}">` : '-'}
+                </td>
+                <td>
+                    ${awayMatch ? `<span class="badge ${getResultClass(awayMatch.awayWins, awayMatch.awayDraws, awayMatch.awayLosses)}">${awayMatch.awayScore}</span>` : '-'}
+                </td>
+            </tr>
+        `;
+        tableBody.innerHTML += row;
+    });
+}
+
+function getResultClass(wins, draws, losses) {
+    if (wins > 0) return 'bg-success';
+    if (draws > 0) return 'bg-warning';
+    if (losses > 0) return 'bg-danger';
+    return 'bg-secondary';
+}
+</script> 

@@ -19,7 +19,7 @@
 
     async function loadTeams() {
         try {
-            const response = await fetch('https://localhost:7245/api/Teams');
+            const response = await fetch('/api/Teams');
             const teams = await response.json();
             const select = document.getElementById('teamSelect');
 
@@ -39,113 +39,175 @@
 
         if (!teamId) return;
 
-        const matches = await fetch(`https://localhost:7245/api/Matches/GetMatchesByTeam?teamId=${teamId}`).then(r => r.json());
-        const jerseyStats = processMatchStats(matches,teamId);
-        await drawJerseyStats(jerseyStats);
+        const matches = await fetch(`/api/Matches/GetMatchesByTeam?teamId=${teamId}`).then(r => r.json());
+        const statsData = processMatchStats(matches, teamId);
+        await drawJerseyStats(statsData);
     }
 
     function processMatchStats(matches, teamId) {
         const stats = new Map();
+        const gkStats = new Map(); // Kaleci formaları için ayrı map
 
         matches.forEach(match => {
             const isHome = match.homeTeamId === parseInt(teamId);
             const jerseyImage = isHome ? match.homeTeamJerseyImage : match.awayTeamJerseyImage;
+            const gkJerseyImage = isHome ? match.homeTeamJerseyImageGK : match.awayTeamJerseyImageGK;
 
-            if (!jerseyImage) return;
+            // Normal forma istatistikleri
+            if (jerseyImage) {
+                const key = jerseyImage.jerseyId;
+                if (!stats.has(key)) {
+                    stats.set(key, {
+                        imgPath: jerseyImage.jersey.path,
+                        wins: 0,
+                        draws: 0,
+                        losses: 0,
+                        total: 0
+                    });
+                }
 
-            // Jersey ID'ye göre gruplama
-            const key = jerseyImage.jerseyId;
-            if (!stats.has(key)) {
-                stats.set(key, {
-                    imgPath: jerseyImage.jersey.path, // Jersey yerine doğrudan imgPath'i kullan
-                    wins: 0,
-                    draws: 0,
-                    losses: 0,
-                    total: 0
-                });
+                const currentStats = stats.get(key);
+                currentStats.total++;
+
+                if (match.homeMS !== null && match.awayMS !== null) {
+                    if (isHome) {
+                        if (match.homeMS > match.awayMS) currentStats.wins++;
+                        else if (match.homeMS === match.awayMS) currentStats.draws++;
+                        else currentStats.losses++;
+                    } else {
+                        if (match.awayMS > match.homeMS) currentStats.wins++;
+                        else if (match.awayMS === match.homeMS) currentStats.draws++;
+                        else currentStats.losses++;
+                    }
+                }
             }
 
-            const currentStats = stats.get(key);
-            currentStats.total++;
+            // Kaleci forması istatistikleri
+            if (gkJerseyImage) {
+                const key = gkJerseyImage.jerseyId;
+                if (!gkStats.has(key)) {
+                    gkStats.set(key, {
+                        imgPath: gkJerseyImage.jersey.path,
+                        wins: 0,
+                        draws: 0,
+                        losses: 0,
+                        total: 0
+                    });
+                }
 
-            if (match.homeMS !== null && match.awayMS !== null) {
-                if (isHome) {
-                    if (match.homeMS > match.awayMS) currentStats.wins++;
-                    else if (match.homeMS === match.awayMS) currentStats.draws++;
-                    else currentStats.losses++;
-                } else {
-                    if (match.awayMS > match.homeMS) currentStats.wins++;
-                    else if (match.awayMS === match.homeMS) currentStats.draws++;
-                    else currentStats.losses++;
+                const currentStats = gkStats.get(key);
+                currentStats.total++;
+
+                if (match.homeMS !== null && match.awayMS !== null) {
+                    if (isHome) {
+                        if (match.homeMS > match.awayMS) currentStats.wins++;
+                        else if (match.homeMS === match.awayMS) currentStats.draws++;
+                        else currentStats.losses++;
+                    } else {
+                        if (match.awayMS > match.homeMS) currentStats.wins++;
+                        else if (match.awayMS === match.homeMS) currentStats.draws++;
+                        else currentStats.losses++;
+                    }
                 }
             }
         });
 
-        return stats;
+        return { stats, gkStats };
     }
 
-    async function drawJerseyStats(statsMap) {
+    async function drawJerseyStats(statsData) {
         try {
             const canvas = document.getElementById('statsCanvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            let x = 200;
-            const y = 200;
+            // Normal formaları sırala
+            const sortedStats = Array.from(statsData.stats.entries()).sort((a, b) => {
+                return b[1].total - a[1].total;
+            });
+
+            // Kaleci formalarını sırala
+            const sortedGKStats = Array.from(statsData.gkStats.entries()).sort((a, b) => {
+                return b[1].total - a[1].total;
+            });
+
             const jerseyWidth = 4000;
             const jerseyHeight = 4000;
             const spacing = 200;
-            const circleRadius = 100;
+            const circleRadius = 200;
+            const fontSize = 128;
 
-            for (const [jerseyId, stats] of statsMap) {
-                try {
-                    // Doğrudan imgPath'i kullan
-                    const jerseyImg = await loadImage(stats.imgPath);
-                    ctx.drawImage(jerseyImg, x, y, jerseyWidth, jerseyHeight);
+            // Normal formaları çiz
+            let x = 200;
+            let y = 200;
+            
+            await drawJerseyRow(ctx, sortedStats, x, y, jerseyWidth, jerseyHeight, spacing, circleRadius, fontSize);
 
-                    // İstatistikleri çiz
-                    ctx.font = '64px Arial';
-                    ctx.textAlign = 'center';
+            // Kaleci formalarını alt sıraya çiz
+            y = y + jerseyHeight + 1000; // Alt sıraya geçmek için y koordinatını artır
+            x = 200; // x koordinatını başa al
+            
+            // // Kaleci formaları başlığı
+            // ctx.font = `${fontSize * 2}px Arial`;
+            // ctx.fillStyle = 'black';
+            // ctx.textAlign = 'center';
+            // ctx.fillText('Kaleci Formaları', canvas.width / 2, y - 200);
 
-                    const centerX = x + (jerseyWidth / 2);
-                    const statsY = y + jerseyHeight + 100;
+            await drawJerseyRow(ctx, sortedGKStats, x, y, jerseyWidth, jerseyHeight, spacing, circleRadius, fontSize);
 
-                    // Galibiyet (Yeşil Daire)
-                    ctx.beginPath();
-                    ctx.arc(centerX - 250, statsY, circleRadius, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#28a745';
-                    ctx.fill();
-                    ctx.fillStyle = 'white';
-                    ctx.fillText(stats.wins.toString(), centerX - 250, statsY + 20);
-
-                    // Beraberlik (Sarı Daire)
-                    ctx.beginPath();
-                    ctx.arc(centerX, statsY, circleRadius, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#ffc107';
-                    ctx.fill();
-                    ctx.fillStyle = 'black';
-                    ctx.fillText(stats.draws.toString(), centerX, statsY + 20);
-
-                    // Mağlubiyet (Kırmızı Daire)
-                    ctx.beginPath();
-                    ctx.arc(centerX + 250, statsY, circleRadius, 0, 2 * Math.PI);
-                    ctx.fillStyle = '#dc3545';
-                    ctx.fill();
-                    ctx.fillStyle = 'white';
-                    ctx.fillText(stats.losses.toString(), centerX + 250, statsY + 20);
-
-                    // Toplam maç sayısı
-                    ctx.fillStyle = 'black';
-                    ctx.fillText(`Toplam: ${stats.total} maç`, centerX, statsY + 200);
-
-                    x += jerseyWidth + spacing;
-                } catch (error) {
-                    console.error('Forma çizilirken hata:', error);
-                    continue; // Hatalı forma için döngüye devam et
-                }
-            }
         } catch (error) {
             console.error('İstatistikler çizilirken hata:', error);
+        }
+    }
+
+    // Forma sırasını çizmek için yardımcı fonksiyon
+    async function drawJerseyRow(ctx, statsArray, x, y, jerseyWidth, jerseyHeight, spacing, circleRadius, fontSize) {
+        for (const [jerseyId, stats] of statsArray) {
+            try {
+                const jerseyImg = await loadImage(stats.imgPath);
+                ctx.drawImage(jerseyImg, x, y, jerseyWidth, jerseyHeight);
+
+                // İstatistikleri çiz
+                ctx.font = `${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+
+                const centerX = x + (jerseyWidth / 2);
+                const statsY = y + jerseyHeight + 200;
+
+                // Galibiyet (Yeşil Daire)
+                ctx.beginPath();
+                ctx.arc(centerX - 500, statsY, circleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#28a745';
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.fillText(stats.wins.toString(), centerX - 500, statsY + 40);
+
+                // Beraberlik (Sarı Daire)
+                ctx.beginPath();
+                ctx.arc(centerX, statsY, circleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ffc107';
+                ctx.fill();
+                ctx.fillStyle = 'black';
+                ctx.fillText(stats.draws.toString(), centerX, statsY + 40);
+
+                // Mağlubiyet (Kırmızı Daire)
+                ctx.beginPath();
+                ctx.arc(centerX + 500, statsY, circleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#dc3545';
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.fillText(stats.losses.toString(), centerX + 500, statsY + 40);
+
+                // Toplam maç sayısı
+                ctx.font = `${fontSize * 1.5}px Arial`;
+                ctx.fillStyle = 'black';
+                ctx.fillText(`Toplam: ${stats.total} maç`, centerX, statsY + 400);
+
+                x += jerseyWidth + spacing;
+            } catch (error) {
+                console.error('Forma çizilirken hata:', error);
+                continue;
+            }
         }
     }
 
