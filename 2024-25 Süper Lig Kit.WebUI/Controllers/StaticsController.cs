@@ -93,5 +93,11 @@ namespace _2024_25_Süper_Lig_Kit.WebUI.Controllers
         {
             return View();
         }
+
+        // En Çok Maç Yöneten Hakemler Detay
+        public IActionResult TopRefereesDetails()
+        {
+            return View();
+        }
     }
 } 

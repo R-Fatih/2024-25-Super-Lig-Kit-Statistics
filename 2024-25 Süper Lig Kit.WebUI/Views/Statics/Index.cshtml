@@ -122,6 +122,20 @@
             </div>
         </div>
 
+        <!-- Top Referees Details -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card stat-card top-referees-card">
+                <div class="card-body">
+                    <div class="card-icon">🏆</div>
+                    <h5 class="card-title">En Çok Maç Yöneten Hakemler</h5>
+                    <p class="card-text">En aktif 10 hakemin forma tercihleri ve takım istatistikleri</p>
+                    <a href="@Url.Action("TopRefereesDetails", "Statics")" class="btn btn-primary">
+                        <i class="fas fa-trophy"></i> Top 10
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <!-- Goalkeeper Performance -->
         <div class="col-lg-6 col-xl-4 mb-4">
             <div class="card stat-card goalkeeper-card">
@@ -337,6 +351,7 @@
     .diversity-card .card-icon { color: #6610f2; }
     .critical-card .card-icon { color: #dc3545; }
     .referee-weekly-card .card-icon { color: #ff6b35; }
+    .top-referees-card .card-icon { color: #ffd700; }
     
     .card-title {
         font-weight: bold;

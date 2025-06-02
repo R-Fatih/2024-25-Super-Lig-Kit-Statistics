@@ -843,5 +843,122 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
             ").ToList();
             return Ok(values);
         }
+
+        // === En Çok Maç Yöneten Hakemler Detay ===
+        [HttpGet("GetTopRefereesDetails")]
+        public async Task<IActionResult> GetTopRefereesDetails()
+        {
+            try
+            {
+                // İlk olarak en çok maç yöneten 10 hakemi alalım
+                var topReferees = await _context.Database.SqlQueryRaw<TopRefereeBasicModel>(@"
+                    SELECT TOP 10 
+                        R.RefereeId,
+                        R.RefereeName,
+                        R.ImgUrl,
+                        CAST(COUNT(*) AS INT) as TotalMatches
+                    FROM Matches M
+                    INNER JOIN Referees R ON R.RefereeId = M.RefereeId
+                    GROUP BY R.RefereeId, R.RefereeName, R.ImgUrl
+                    ORDER BY COUNT(*) DESC
+                ").ToListAsync();
+
+                var result = new List<TopRefereeDetailsModel>();
+
+                foreach (var referee in topReferees)
+                {
+                    // Her hakem için forma bilgilerini alalım
+                    var kitData = await _context.Database.SqlQueryRaw<RefereeKitModel>(@"
+                        SELECT 
+                            J.Name as KitName,
+                            J.Path as KitImagePath,
+                            CAST(COUNT(*) AS INT) as KitUsageCount
+                        FROM Matches M
+                        INNER JOIN JerseyImages JI ON JI.JerseyImageId = M.RefereeJerseyImageId
+                        INNER JOIN Jerseys J ON JI.JerseyId = J.Id
+                        WHERE M.RefereeId = {0}
+                        GROUP BY J.Name, J.Path
+                        ORDER BY COUNT(*) DESC
+                    ", referee.RefereeId).ToListAsync();
+
+                    // Her hakem için takım bilgilerini alalım
+                    var teamData = await _context.Database.SqlQueryRaw<RefereeTeamModel>(@"
+                        SELECT TOP 5
+                            T.Name as TeamName,
+                            T.Logo as TeamLogo,
+                            CAST(COUNT(*) AS INT) as TeamMatchCount
+                        FROM Matches M
+                        INNER JOIN Teams T ON (T.TeamId = M.HomeTeamId OR T.TeamId = M.AwayTeamId)
+                        WHERE M.RefereeId = {0}
+                        GROUP BY T.Name, T.Logo
+                        ORDER BY COUNT(*) DESC
+                    ", referee.RefereeId).ToListAsync();
+
+                    // Ana kayıt
+                    result.Add(new TopRefereeDetailsModel
+                    {
+                        RefereeId = referee.RefereeId,
+                        RefereeName = referee.RefereeName,
+                        ImgUrl = referee.ImgUrl,
+                        TotalMatches = referee.TotalMatches,
+                        KitName = null,
+                        KitImagePath = null,
+                        KitUsageCount = null,
+                        TeamName = null,
+                        TeamLogo = null,
+                        TeamMatchCount = null,
+                        TeamRank = null
+                    });
+
+                    // Forma kayıtları
+                    int kitRank = 1;
+                    foreach (var kit in kitData)
+                    {
+                        result.Add(new TopRefereeDetailsModel
+                        {
+                            RefereeId = referee.RefereeId,
+                            RefereeName = referee.RefereeName,
+                            ImgUrl = referee.ImgUrl,
+                            TotalMatches = referee.TotalMatches,
+                            KitName = kit.KitName,
+                            KitImagePath = kit.KitImagePath,
+                            KitUsageCount = kit.KitUsageCount,
+                            TeamName = null,
+                            TeamLogo = null,
+                            TeamMatchCount = null,
+                            TeamRank = null
+                        });
+                        kitRank++;
+                    }
+
+                    // Takım kayıtları
+                    int teamRank = 1;
+                    foreach (var team in teamData)
+                    {
+                        result.Add(new TopRefereeDetailsModel
+                        {
+                            RefereeId = referee.RefereeId,
+                            RefereeName = referee.RefereeName,
+                            ImgUrl = referee.ImgUrl,
+                            TotalMatches = referee.TotalMatches,
+                            KitName = null,
+                            KitImagePath = null,
+                            KitUsageCount = null,
+                            TeamName = team.TeamName,
+                            TeamLogo = team.TeamLogo,
+                            TeamMatchCount = team.TeamMatchCount,
+                            TeamRank = teamRank
+                        });
+                        teamRank++;
+                    }
+                }
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error: {ex.Message}");
+            }
+        }
     }
 }

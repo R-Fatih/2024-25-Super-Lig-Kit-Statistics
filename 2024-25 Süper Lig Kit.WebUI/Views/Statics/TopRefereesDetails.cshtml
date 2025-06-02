@@ -1,0 +1,472 @@
+@{
+    ViewData["Title"] = "En Çok Maç Yöneten Hakemler";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-trophy"></i> En Çok Maç Yöneten 10 Hakem
+                    </h3>
+                    <p class="card-text mt-2 mb-0">Hakemlerin forma tercihleri ve en çok yönettikleri takımların analizi</p>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-success active" id="btnShowKits">
+                                <i class="fas fa-tshirt"></i> Forma Tercihleri
+                            </button>
+                            <button type="button" class="btn btn-outline-success" id="btnShowTeams">
+                                <i class="fas fa-users"></i> Takım İstatistikleri
+                            </button>
+                            <button type="button" class="btn btn-outline-success" id="btnShowBoth">
+                                <i class="fas fa-layer-group"></i> Hepsi
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <label for="zoomRange" class="form-label me-2">Boyut:</label>
+                            <input type="range" class="form-range" id="zoomRange" min="0.7" max="1.5" step="0.1" value="1">
+                            <span class="ms-2" id="zoomValue">100%</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <strong>Açıklama:</strong>
+                                <ul class="mb-0">
+                                    <li>En çok maç yöneten 10 hakem gösterilmektedir</li>
+                                    <li>Her hakemin altında kullandığı formalar ve sayıları yer alır</li>
+                                    <li>En çok maç yönettiği takımların logoları gösterilir</li>
+                                    <li>Fareyi hakemin üzerine getirin detaylı bilgi için</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="loadingIndicator" class="text-center py-5">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <p class="mt-2">Hakem verileri yükleniyor...</p>
+                    </div>
+
+                    <div id="canvasContainer" class="position-relative" style="display: none;">
+                        <div class="canvas-scroll-container" style="overflow: auto; max-height: 900px; border: 1px solid #ddd; border-radius: 8px;">
+                            <canvas width="3000" height="2000" id="topRefereesCanvas" style="display: block;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tooltip -->
+                    <div id="tooltip" class="position-absolute bg-dark text-white p-3 rounded shadow-lg" style="display: none; z-index: 1000; font-size: 13px; max-width: 400px;">
+                        <div id="tooltipContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .canvas-scroll-container::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .canvas-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 6px;
+    }
+    
+    .canvas-scroll-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 6px;
+    }
+    
+    .canvas-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+    
+    .form-range {
+        width: 120px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let refereeData = [];
+    let processedData = [];
+    let currentViewMode = 'kits'; // 'kits', 'teams', 'both'
+    let canvas, ctx;
+    let columnWidth = 220;
+    let headerHeight = 2500;
+    let refereeImageSize = 80;
+    let kitImageSize = 40;
+    let teamLogoSize = 35;
+    let currentZoom = 1;
+
+    // Initialize
+    initializeCanvas();
+    loadRefereeData();
+    setupEventListeners();
+
+    function initializeCanvas() {
+        canvas = document.getElementById('topRefereesCanvas');
+        ctx = canvas.getContext('2d');
+        
+        // Set initial canvas size
+        canvas.width = columnWidth * 10; // 10 referees
+        canvas.height = 800; // Will be adjusted based on content
+    }
+
+    function setupEventListeners() {
+        // View mode buttons
+        document.getElementById('btnShowKits').addEventListener('click', function() {
+            setViewMode('kits', this);
+        });
+        
+        document.getElementById('btnShowTeams').addEventListener('click', function() {
+            setViewMode('teams', this);
+        });
+
+        document.getElementById('btnShowBoth').addEventListener('click', function() {
+            setViewMode('both', this);
+        });
+
+        // Zoom control
+        const zoomRange = document.getElementById('zoomRange');
+        zoomRange.addEventListener('input', function() {
+            currentZoom = parseFloat(this.value);
+            document.getElementById('zoomValue').textContent = Math.round(currentZoom * 100) + '%';
+            applyZoom();
+            drawReferees();
+        });
+
+        // Canvas mouse events for tooltip
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseleave', hideTooltip);
+    }
+
+    function setViewMode(mode, button) {
+        currentViewMode = mode;
+        
+        // Update button states
+        document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        drawReferees();
+    }
+
+    function applyZoom() {
+        columnWidth = 220 * currentZoom;
+        headerHeight = 500 * currentZoom;
+        refereeImageSize = 80 * currentZoom;
+        kitImageSize = 60 * currentZoom;
+        teamLogoSize = 35 * currentZoom;
+        
+        // Update canvas size
+        canvas.width = columnWidth * 10;
+        
+        // Calculate height based on view mode
+        let estimatedHeight = headerHeight + 200 * currentZoom;
+        if (currentViewMode === 'both') {
+            estimatedHeight = headerHeight + 350 * currentZoom;
+        } else if (currentViewMode === 'teams') {
+            estimatedHeight = headerHeight + 250 * currentZoom;
+        }
+        
+        canvas.height = estimatedHeight;
+    }
+
+    async function loadRefereeData() {
+        try {
+            const response = await fetch('https://localhost:7245/api/Statics/GetTopRefereesDetails');
+            refereeData = await response.json();
+            
+            processData();
+            
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('canvasContainer').style.display = 'block';
+            
+            applyZoom();
+            drawReferees();
+        } catch (error) {
+            console.error('Error loading referee data:', error);
+            document.getElementById('loadingIndicator').innerHTML = 
+                '<div class="alert alert-danger">Veri yüklenirken hata oluştu: ' + error.message + '</div>';
+        }
+    }
+
+    function processData() {
+        // Group data by referee
+        const refereeMap = new Map();
+        
+        refereeData.forEach(item => {
+            if (!refereeMap.has(item.refereeId)) {
+                refereeMap.set(item.refereeId, {
+                    refereeId: item.refereeId,
+                    refereeName: item.refereeName,
+                    imgUrl: item.imgUrl,
+                    totalMatches: item.totalMatches,
+                    kits: [],
+                    teams: []
+                });
+            }
+            
+            const referee = refereeMap.get(item.refereeId);
+            
+            // Add kit data (only if kitName exists and not already added)
+            if (item.kitName && !referee.kits.find(k => k.kitName === item.kitName)) {
+                referee.kits.push({
+                    kitName: item.kitName,
+                    kitImagePath: item.kitImagePath,
+                    kitUsageCount: item.kitUsageCount
+                });
+            }
+            
+            // Add team data (only if teamName exists and not already added)
+            if (item.teamName && !referee.teams.find(t => t.teamName === item.teamName)) {
+                referee.teams.push({
+                    teamName: item.teamName,
+                    teamLogo: item.teamLogo,
+                    teamMatchCount: item.teamMatchCount,
+                    teamRank: item.teamRank || referee.teams.length + 1
+                });
+            }
+        });
+        
+        processedData = Array.from(refereeMap.values())
+            .sort((a, b) => b.totalMatches - a.totalMatches)
+            .slice(0, 10);
+            
+        // Sort kits by usage count and teams by rank
+        processedData.forEach(referee => {
+            referee.kits.sort((a, b) => b.kitUsageCount - a.kitUsageCount);
+            referee.teams.sort((a, b) => (a.teamRank || 0) - (b.teamRank || 0));
+        });
+    }
+
+    function drawReferees() {
+        if (!processedData.length) return;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Set font
+        ctx.font = `${12 * currentZoom}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Draw each referee column
+        processedData.forEach((referee, index) => {
+            drawRefereeColumn(referee, index);
+        });
+    }
+
+    async function drawRefereeColumn(referee, columnIndex) {
+        const x = columnIndex * columnWidth;
+        let y = 10 * currentZoom;
+
+        // Column background
+        ctx.fillStyle = columnIndex % 2 === 0 ? '#f8f9fa' : '#ffffff';
+        ctx.fillRect(x, 0, columnWidth, canvas.height);
+
+        // Column border
+        ctx.strokeStyle = '#dee2e6';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, 0, columnWidth, canvas.height);
+
+        // Referee ranking
+        ctx.fillStyle = '#28a745';
+        ctx.font = `bold ${16 * currentZoom}px Arial`;
+        ctx.fillText(`#${columnIndex + 1}`, x + columnWidth/2, y + 15 * currentZoom);
+        y += 35 * currentZoom;
+
+        // Referee image
+        try {
+            const refereeImg = await loadImage(referee.imgUrl);
+            ctx.drawImage(refereeImg, x + (columnWidth - refereeImageSize)/2, y, refereeImageSize, refereeImageSize);
+        } catch (error) {
+            // Draw placeholder if image fails
+            ctx.fillStyle = '#6c757d';
+            ctx.fillRect(x + (columnWidth - refereeImageSize)/2, y, refereeImageSize, refereeImageSize);
+        }
+        y += refereeImageSize + 10 * currentZoom;
+
+        // Referee name
+        ctx.fillStyle = '#333';
+        ctx.font = `bold ${13 * currentZoom}px Arial`;
+        const nameText = 
+            referee.refereeName;
+        ctx.fillText(nameText, x + columnWidth/2, y);
+        y += 20 * currentZoom;
+
+        // Total matches
+        ctx.fillStyle = '#6c757d';
+        ctx.font = `${11 * currentZoom}px Arial`;
+        ctx.fillText(`${referee.totalMatches} Maç`, x + columnWidth/2, y);
+        y += 25 * currentZoom;
+
+        // Draw kit section
+        if (currentViewMode === 'kits' || currentViewMode === 'both') {
+            y = await drawKitSection(referee, x, y);
+        }
+
+        // Draw team section
+        if (currentViewMode === 'teams' || currentViewMode === 'both') {
+            y = await drawTeamSection(referee, x, y);
+        }
+    }
+
+    async function drawKitSection(referee, x, y) {
+        // Kit section title
+        ctx.fillStyle = '#495057';
+        ctx.font = `bold ${12 * currentZoom}px Arial`;
+        ctx.fillText('FORMA TERCİHLERİ', x + columnWidth/2, y);
+        y += 25 * currentZoom;
+
+        // Draw kits horizontally (max 4)
+        const kitsToShow = referee.kits.slice(0, 4);
+        const kitSpacing = (columnWidth - 20 * currentZoom) / Math.max(kitsToShow.length, 1);
+        const startX = x + 5 * currentZoom;
+
+        for (let i = 0; i < kitsToShow.length; i++) {
+            const kit = kitsToShow[i];
+            const kitX = startX + (i * kitSpacing);
+            const kitCenterX = kitX + kitImageSize/2;
+            
+            // Kit image
+            try {
+                const kitImg = await loadImage(kit.kitImagePath);
+                ctx.drawImage(kitImg, kitX, y, kitImageSize, kitImageSize);
+            } catch (error) {
+                // Draw placeholder
+                ctx.fillStyle = '#e9ecef';
+                ctx.fillRect(kitX, y, kitImageSize, kitImageSize);
+                
+                // Draw border for placeholder
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(kitX, y, kitImageSize, kitImageSize);
+            }
+            
+            // Kit usage count below the image
+            ctx.fillStyle = '#dc3545';
+            ctx.font = `bold ${10 * currentZoom}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(kit.kitUsageCount.toString(), kitCenterX, y + kitImageSize + 5 * currentZoom);
+            
+            // Kit name (optional, if space allows)
+            if (currentZoom >= 1) {
+                ctx.fillStyle = '#6c757d';
+                ctx.font = `${8 * currentZoom}px Arial`;
+                const kitNameShort = kit.kitName.length > 6 ? kit.kitName.substring(0, 4) + '..' : kit.kitName;
+                ctx.fillText(kitNameShort, kitCenterX, y + kitImageSize + 18 * currentZoom);
+            }
+        }
+
+        return y + kitImageSize + 35 * currentZoom;
+    }
+
+    async function drawTeamSection(referee, x, y) {
+        // Team section title
+        ctx.fillStyle = '#495057';
+        ctx.font = `bold ${12 * currentZoom}px Arial`;
+        ctx.fillText('TAKIMLAR', x + columnWidth/2, y+10);
+        y += 25 * currentZoom;
+
+        // Draw teams horizontally (max 5)
+        const teamsToShow = referee.teams.slice(0, 5);
+        const teamSpacing = (columnWidth - 20 * currentZoom) / Math.max(teamsToShow.length, 1);
+        const startX = x + 10 * currentZoom;
+        
+        for (let i = 0; i < teamsToShow.length; i++) {
+            const team = teamsToShow[i];
+            const teamX = startX + (i * teamSpacing);
+            const teamCenterX = teamX + teamLogoSize/2;
+            
+            // Team logo
+            try {
+                const teamImg = await loadImage(team.teamLogo);
+                ctx.drawImage(teamImg, teamX, y, teamLogoSize, teamLogoSize);
+            } catch (error) {
+                // Draw placeholder
+                ctx.fillStyle = '#e9ecef';
+                ctx.fillRect(teamX, y, teamLogoSize, teamLogoSize);
+                
+                // Draw border for placeholder
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(teamX, y, teamLogoSize, teamLogoSize);
+            }
+            
+            // Match count below the logo
+            ctx.fillStyle = '#007bff';
+            ctx.font = `bold ${9 * currentZoom}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText(team.teamMatchCount.toString(), teamCenterX, y + teamLogoSize + 12 * currentZoom);
+        }
+
+        return y + teamLogoSize + 20 * currentZoom;
+    }
+
+    function loadImage(src) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
+    }
+
+    function handleMouseMove(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // Calculate which referee column
+        const columnIndex = Math.floor(x / columnWidth);
+        
+        if (columnIndex >= 0 && columnIndex < processedData.length) {
+            const referee = processedData[columnIndex];
+            showTooltip(event, referee);
+        } else {
+            hideTooltip();
+        }
+    }
+
+    function showTooltip(event, referee) {
+        const tooltip = document.getElementById('tooltip');
+        const content = document.getElementById('tooltipContent');
+
+        let kitsList = referee.kits.slice(0, 3).map(kit => 
+            `${kit.kitName}: ${kit.kitUsageCount} maç`
+        ).join('<br>');
+
+        let teamsList = referee.teams.slice(0, 3).map(team => 
+            `${team.teamName}: ${team.teamMatchCount} maç`
+        ).join('<br>');
+
+        let html = `
+            <strong>${referee.refereeName}</strong><br>
+            <strong>Toplam Maç:</strong> ${referee.totalMatches}<br><br>
+            <strong>En Çok Kullandığı Formalar:</strong><br>
+            ${kitsList}<br><br>
+            <strong>En Çok Yönettiği Takımlar:</strong><br>
+            ${teamsList}
+        `;
+
+        content.innerHTML = html;
+        
+        tooltip.style.left = (event.clientX + 15) + 'px';
+        tooltip.style.top = (event.clientY - 10) + 'px';
+        tooltip.style.display = 'block';
+    }
+
+    function hideTooltip() {
+        document.getElementById('tooltip').style.display = 'none';
+    }
+});
+</script> 
