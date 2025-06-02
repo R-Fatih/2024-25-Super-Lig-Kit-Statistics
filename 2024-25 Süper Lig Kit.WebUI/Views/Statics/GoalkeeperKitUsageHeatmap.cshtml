@@ -67,7 +67,7 @@
         const cellSize = 80;
         const margin = 120; // Increased margin for logos
         const startX = margin;
-        const startY = 50;
+        const startY = 100;
 
         // Find max usage for color scaling
         const maxUsage = Math.max(...data.map(d => d.usageCount));
@@ -110,14 +110,14 @@
 
         // Draw kit labels (rotated)
         ctx.fillStyle = '#ffffff';
-        ctx.font = "12px Arial";
+        ctx.font = "20px Arial";
 
         for (let j = 0; j < maxKits; j++) {
             const kit = allKits[j];
             const x = startX + (j * cellSize) + cellSize/2;
 
             ctx.save();
-            ctx.translate(x, startY - 10);
+            ctx.translate(x, startY - 20);
             ctx.rotate(-Math.PI/4);
             ctx.textAlign = "left";
             ctx.fillText(kit.substring(0, 8), 0, 0);
@@ -152,13 +152,13 @@
                 // Draw usage count if significant
                 if (usageCount > 0) {
                     ctx.fillStyle = intensity > 0.5 ? '#ffffff' : '#000000';
-                    ctx.font = "15px Arial";
+                    ctx.font = "20px Arial";
                     ctx.textAlign = "center";
                     ctx.fillText(usageCount.toString(), x + cellSize/2, y + cellSize/2 + 3);
 
                     if (usagePercentage >= 10) {
-                        ctx.font = "13px Arial";
-                        ctx.fillText(`%${usagePercentage.toFixed(0)}`, x + cellSize/2, y + cellSize/2 + 18);
+                        ctx.font = "18px Arial";
+                        ctx.fillText(`%${usagePercentage.toFixed(0)}`, x + cellSize/2, y + cellSize/2 + 28);
                     }
                 }
 

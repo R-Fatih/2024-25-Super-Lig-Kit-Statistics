@@ -960,5 +960,97 @@ namespace _2024_25_Süper_Lig_Kit.WebApi.Controllers
                 return StatusCode(500, $"Error: {ex.Message}");
             }
         }
+
+
+        [HttpGet("GetHeat2")]
+        public async Task<IActionResult> GetHeat2()
+        {
+            var values = await _context.Matches
+     .Include(x => x.HomeTeamJerseyImage)
+     .ThenInclude(x => x.Jersey)
+     .Include(x => x.AwayTeamJerseyImage)
+     .ThenInclude(x => x.Jersey)
+     .Select(x => new
+     {
+         hm = x.HomeTeamJerseyImage.Jersey.Name,
+         hp = x.HomeTeamJerseyImage.Jersey.Path,
+         an = x.AwayTeamJerseyImage.Jersey.Name,
+         ap = x.AwayTeamJerseyImage.Jersey.Path,
+         hms = x.HomeMS,
+         ams = x.AwayMS
+     }).ToListAsync();
+
+            var homeData = values.Select(x => new
+            {
+                teamName = x.hm,
+                teamPath = x.hp,
+                score = x.hms,
+                matchCount = 1
+            });
+
+            var awayData = values.Select(x => new
+            {
+                teamName = x.an,
+                teamPath = x.ap,
+                score = x.ams,
+                matchCount = 1
+            });
+
+            var values2 = homeData.Concat(awayData)
+                .GroupBy(x => x.teamName)
+                .Select(g => new
+                {
+                    name = g.Key,
+                    path = g.First().teamPath,
+                    totalMatches = g.Sum(x => x.matchCount)
+                }).OrderByDescending(x=>x.totalMatches).ToList();
+
+            return Ok(new { data = values2, totalcount = values2.Sum(x => x.totalMatches) });
+        }
+        [HttpGet("GetHeat2GK")]
+        public async Task<IActionResult> GetHeat2GK()
+        {
+            var values = await _context.Matches
+     .Include(x => x.HomeTeamJerseyImageGK)
+     .ThenInclude(x => x.Jersey)
+     .Include(x => x.AwayTeamJerseyImageGK)
+     .ThenInclude(x => x.Jersey)
+     .Select(x => new
+     {
+         hm = x.HomeTeamJerseyImageGK.Jersey.Name,
+         hp = x.HomeTeamJerseyImage.Jersey.Path,
+         an = x.AwayTeamJerseyImageGK.Jersey.Name,
+         ap = x.AwayTeamJerseyImage.Jersey.Path,
+         hms = x.HomeMS,
+         ams = x.AwayMS
+     }).ToListAsync();
+
+            var homeData = values.Select(x => new
+            {
+                teamName = x.hm,
+                teamPath = x.hp,
+                score = x.hms,
+                matchCount = 1
+            });
+
+            var awayData = values.Select(x => new
+            {
+                teamName = x.an,
+                teamPath = x.ap,
+                score = x.ams,
+                matchCount = 1
+            });
+
+            var values2 = homeData.Concat(awayData)
+                .GroupBy(x => x.teamName)
+                .Select(g => new
+                {
+                    name = g.Key,
+                    path = g.First().teamPath,
+                    totalMatches = g.Sum(x => x.matchCount)
+                }).OrderByDescending(x => x.totalMatches).ToList();
+
+            return Ok(new { data = values2, totalcount = values2.Sum(x => x.totalMatches) });
+        }
     }
 }
